@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5">
+<meta name="theme-color" content="#e6d6ac" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17130f" media="(prefers-color-scheme: dark)">
+<meta name="description" content="Flashcards com repetição espaçada para GPMS e Redes de Computadores — UFF.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Anki UFF — GPMS &amp; Redes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.92em' font-size='92'>🃏</text></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <button class="iconbtn ghost" id="tb-back" data-to="">‹</button>
+    <div class="tb-title" id="tb-title">Meus baralhos</div>
+    <button class="iconbtn" id="tb-cfg" aria-label="Ajustes">⚙️</button>
+  </div>
+</header>
+
+<main class="app">
+  <section class="view on" id="v-home"></section>
+  <section class="view" id="v-subject"></section>
+  <section class="view" id="v-study"></section>
+</main>
+
+<div class="sheet" id="sheet">
+  <div class="sheet-bg" id="sheet-bg"></div>
+  <div class="sheet-in">
+    <div class="grab"></div>
+    <div id="sheet-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="file" accept="application/json,.json" hidden>
+
+<script src="js/data-gpms.js"></script>
+<script src="js/data-redes.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
