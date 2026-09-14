@@ -3,11 +3,11 @@
 Aplicativo web de flashcards com **repetição espaçada** (algoritmo SM-2, no estilo do Anki),
 gerado a partir dos slides e listas de exercícios de duas disciplinas da UFF.
 
-**308 cartões**, organizados por matéria → aula.
+**369 cartões**, organizados por matéria → aula.
 
 | Matéria | Código | Aulas | Cartões |
 |---|---|---|---|
-| Gerência de Projetos e Manutenção de Software | TCC00363 | 6 | 116 |
+| Gerência de Projetos e Manutenção de Software | TCC00363 | 10 | 177 |
 | Redes de Computadores para Sistemas de Informação | TCC00359 | 8 | 192 |
 
 ## Como funciona
@@ -50,7 +50,7 @@ então, é a **API do GitHub**, que cria um commit — e ela exige autenticaçã
 1. Em <https://github.com/settings/personal-access-tokens>, crie um **fine-grained token**:
    - **Repository access**: apenas este repositório
    - **Permissions → Repository permissions → Contents**: `Read and write`
-2. No app, **⚙️ → Sincronizar com o GitHub**: preencha `seu-usuario/anki-uff` e cole o token
+2. No app, **⚙️ → Sincronizar com o GitHub**: preencha `MatheusFSD/anki` e cole o token
 3. **Salvar e enviar**
 
 Feito isso, em qualquer navegador basta abrir o app e colar os mesmos dados; ele baixa o
@@ -94,13 +94,13 @@ git init
 git add .
 git commit -m "Anki UFF: flashcards de GPMS e Redes"
 git branch -M main
-git remote add origin https://github.com/SEU-USUARIO/anki-uff.git
+git remote add origin https://github.com/MatheusFSD/anki.git
 git push -u origin main
 ```
 
 Depois, no repositório: **Settings → Pages → Source: `Deploy from a branch` → `main` / `/ (root)`**.
 
-O site fica em `https://SEU-USUARIO.github.io/anki-uff/` em cerca de um minuto.
+O site fica em `https://matheusfsd.github.io/anki/` em cerca de um minuto.
 
 No celular, use "Adicionar à tela de início" para abrir em tela cheia como um app.
 
@@ -126,7 +126,7 @@ Basta abrir o `index.html` no navegador — não há build nem dependências al�
 ```
 index.html            estrutura da página
 css/style.css         estilos (mobile first, tema claro/escuro)
-js/data-gpms.js       116 cartões de GPMS
+js/data-gpms.js       177 cartões de GPMS
 js/data-redes.js      192 cartões de Redes
 js/sync.js            leitura/escrita do JSON no repositório (API do GitHub)
 js/app.js             agendador SM-2, telas e persistência
