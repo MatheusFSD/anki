@@ -3,12 +3,12 @@
 Aplicativo web de flashcards com **repetição espaçada** (algoritmo SM-2, no estilo do Anki),
 gerado a partir dos slides e listas de exercícios de duas disciplinas da UFF.
 
-**369 cartões**, organizados por matéria → aula.
+**412 cartões**, organizados por matéria → aula.
 
 | Matéria | Código | Aulas | Cartões |
 |---|---|---|---|
 | Gerência de Projetos e Manutenção de Software | TCC00363 | 10 | 177 |
-| Redes de Computadores para Sistemas de Informação | TCC00359 | 8 | 192 |
+| Redes de Computadores para Sistemas de Informação | TCC00359 | 10 | 235 |
 
 ## Como funciona
 
@@ -127,7 +127,7 @@ Basta abrir o `index.html` no navegador — não há build nem dependências al�
 index.html            estrutura da página
 css/style.css         estilos (mobile first, tema claro/escuro)
 js/data-gpms.js       177 cartões de GPMS
-js/data-redes.js      192 cartões de Redes
+js/data-redes.js      235 cartões de Redes
 js/sync.js            leitura/escrita do JSON no repositório (API do GitHub)
 js/app.js             agendador SM-2, telas e persistência
 dados/progresso.json  progresso sincronizado
