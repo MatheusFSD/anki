@@ -3,6 +3,11 @@
    ============================================================ */
 
 const SUBJECTS = [GPMS, REDES];
+
+// resumos em linguagem simples (aba "Resumos"): cada aula pode ter o seu
+if (typeof RESUMOS_GPMS !== "undefined"){
+  for (const l of GPMS.lessons) if (RESUMOS_GPMS[l.id]) l.resumo = RESUMOS_GPMS[l.id];
+}
 const STORE_KEY = "ankiuff.progress.v1";
 const CFG_KEY   = "ankiuff.config.v1";
 const DAY = 86400000;
@@ -219,7 +224,7 @@ const reduced = () => typeof matchMedia === "function" && matchMedia("(prefers-r
 function buzz(ms){ try{ navigator.vibrate && navigator.vibrate(ms); }catch(e){} }
 
 /* profundidade das telas, para saber se a transição vai ou volta */
-const DEPTH = { home:0, subject:1, study:2 };
+const DEPTH = { home:0, subject:1, study:2, read:2 };
 
 function go(view, opts){
   const back = DEPTH[view] < DEPTH[VIEW];
@@ -231,6 +236,7 @@ function go(view, opts){
   if (view === "home")    renderHome();
   if (view === "subject") renderSubject(opts.sid);
   if (view === "study")   startStudy(opts);
+  if (view === "read")    renderRead(opts.id);
   el.classList.add(back ? "nav-back" : "nav-fwd");
 }
 
@@ -332,12 +338,22 @@ function growBars(scope){
 
 /* ---------- MATÉRIA ---------- */
 let SUBJ_ATUAL = null;
+let SUBJ_TAB = "baralhos";          // "baralhos" | "resumos"
+let READ_ID = null;
+
+/* tempo de leitura estimado do resumo de uma aula (~190 palavras/min) */
+function readMin(l){
+  const palavras = l.resumo.html.replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(palavras / 190));
+}
 
 function renderSubject(sid){
   SUBJ_ATUAL = sid;
   const s = SUBJ[sid];
   setTop({ title:s.nome, sub:s.nomeLongo, back:"home" });
   const sc = countsFor(subjIds(sid));
+  const temResumos = s.lessons.some(l => l.resumo);
+  if (!temResumos) SUBJ_TAB = "baralhos";
 
   let h = `<div class="hero">
     <div class="dateline"><span>${s.codigo}</span><span>${s.lessons.length} aulas</span></div>
@@ -355,13 +371,41 @@ function renderSubject(sid){
       data-act="study" data-scope="subject" data-id="${sid}">Estudar a matéria toda</button></div>`;
   }
 
-  h += `<div class="sectitle">Aulas</div>`;
+  // abas: só aparecem quando a matéria tem pelo menos um resumo escrito
+  if (temResumos){
+    h += `
+    <div class="tabs" role="tablist" style="--c1:${s.cor}">
+      <button role="tab" data-act="tab" data-tab="baralhos" class="${SUBJ_TAB === "baralhos" ? "on" : ""}"
+        aria-selected="${SUBJ_TAB === "baralhos"}">Baralhos</button>
+      <button role="tab" data-act="tab" data-tab="resumos" class="${SUBJ_TAB === "resumos" ? "on" : ""}"
+        aria-selected="${SUBJ_TAB === "resumos"}">Resumos</button>
+    </div>`;
+  }
+  h += `<div id="subj-body"></div>`;
+
+  const root = $("#v-subject");
+  root.innerHTML = h;
+  renderSubjBody(s);
+  animateNumbers(root);
+}
+
+/* conteúdo da aba ativa da matéria */
+function renderSubjBody(s){
+  const el = $("#subj-body");
+  if (!el) return;
+  el.innerHTML = SUBJ_TAB === "resumos" ? resumosList(s) : lessonsList(s);
+  growBars(el);
+}
+
+/* aba Baralhos: uma ficha por aula, com cartões e botões de estudo */
+function lessonsList(s){
+  let h = `<div class="sectitle">Aulas</div>`;
   s.lessons.forEach((l, i) => {
     const lc = countsFor(l.cardIds);
     const pend = lc.novos + lc.revisar;
     h += `
     <div class="lesson rise ${pend ? "" : "done"}"
-      style="--c1:${s.cor};--c2:${s.cor2};animation-delay:${180 + i*55}ms">
+      style="--c1:${s.cor};--c2:${s.cor2};animation-delay:${60 + i*45}ms">
       <div class="lsn-top">
         <span class="lsn-tag">${l.nome}</span>
         <span class="lsn-title">${l.titulo}</span>
@@ -377,6 +421,7 @@ function renderSubject(sid){
         ${lc.revisar ? `<span class="badge rev">${lc.revisar} a revisar</span>` : ""}
         ${!pend ? `<span class="badge">em dia</span>` : ""}
       </div>
+      ${l.resumo ? `<button class="btn small" style="margin-bottom:10px" data-act="read" data-id="${l.id}">📖 Ler o resumo · ${readMin(l)} min</button>` : ""}
       <div class="btnrow">
         <button class="btn small ${pend ? "primary" : ""}" style="--c1:${s.cor};--c2:${s.cor2}"
           data-act="study" data-scope="lesson" data-id="${l.id}">${pend ? "Estudar ("+pend+")" : "Estudar"}</button>
@@ -384,10 +429,56 @@ function renderSubject(sid){
       </div>
     </div>`;
   });
-  const root = $("#v-subject");
-  root.innerHTML = h;
-  animateNumbers(root);
-  growBars(root);
+  return h;
+}
+
+/* aba Resumos: as aulas que têm explicação escrita */
+function resumosList(s){
+  const com = s.lessons.filter(l => l.resumo);
+  const sem = s.lessons.length - com.length;
+  let h = `<div class="sectitle">Resumos das aulas</div>`;
+  com.forEach((l, i) => {
+    h += `
+    <button class="lesson rise" data-act="read" data-id="${l.id}"
+      style="--c1:${s.cor};--c2:${s.cor2};animation-delay:${60 + i*55}ms">
+      <div class="lsn-top">
+        <span class="lsn-tag">${l.nome}</span>
+        <span class="lsn-title">${l.titulo}</span>
+      </div>
+      <p class="lsn-sum">${l.resumo.resumo}</p>
+      <div class="badges">
+        <span class="badge">📖 ${readMin(l)} min de leitura</span>
+        <span class="badge">${l.cardIds.length} cartões</span>
+      </div>
+    </button>`;
+  });
+  if (sem > 0){
+    h += `<p class="empty">As outras ${sem} ${sem === 1 ? "aula ainda não tem" : "aulas ainda não têm"} resumo escrito — por enquanto só os cartões.</p>`;
+  }
+  return h;
+}
+
+/* ---------- LEITURA (resumo de uma aula) ---------- */
+function renderRead(id){
+  READ_ID = id;
+  const l = LESSON[id], s = l.subject;
+  const lc = countsFor(l.cardIds);
+  const pend = lc.novos + lc.revisar;
+  setTop({ title:s.nome + " · " + l.nome, sub:"Resumo da aula", back:"read-close" });
+  $("#v-read").innerHTML = `
+  <div style="--c1:${s.cor};--c2:${s.cor2}">
+    <div class="hero">
+      <div class="dateline"><span>${s.codigo}</span><span>${l.nome}</span><span>${readMin(l)} min de leitura</span></div>
+      <h1>${l.titulo}</h1>
+    </div>
+    <article class="read">${l.resumo.html}</article>
+    <button class="btn primary" data-act="study" data-scope="lesson" data-id="${l.id}"
+      ${pend ? "" : `data-modo="tudo"`}>${pend ? "Estudar os cartões desta aula (" + pend + ")" : "Revisar os cartões desta aula"}</button>
+  </div>`;
+}
+function closeRead(){
+  const l = LESSON[READ_ID];
+  go("subject", { sid: l ? l.subject.id : SUBJ_ATUAL });
 }
 
 /* ---------- ESTUDO ---------- */
@@ -588,12 +679,13 @@ document.addEventListener("click", e => {
   if (t.id === "tb-back"){
     const to = t.dataset.to;
     if (to === "close") finishStudy();
+    else if (to === "read-close") closeRead();
     else go(to);
     return;
   }
   if (t.id === "tb-cfg"){ openSheet(); return; }
 
-  if (t.dataset.sid && !t.dataset.act){ go("subject", { sid:t.dataset.sid }); return; }
+  if (t.dataset.sid && !t.dataset.act){ SUBJ_TAB = "baralhos"; go("subject", { sid:t.dataset.sid }); return; }
 
   const g = t.dataset.grade;
   if (g){ doGrade(+g); return; }
@@ -601,6 +693,16 @@ document.addEventListener("click", e => {
   switch (t.dataset.act){
     case "studyall": go("study", { scope:"all" }); break;
     case "study":    go("study", { scope:t.dataset.scope, id:t.dataset.id, modo:t.dataset.modo }); break;
+    case "tab":
+      SUBJ_TAB = t.dataset.tab;
+      $$(".tabs button").forEach(b => {
+        const on = b.dataset.tab === SUBJ_TAB;
+        b.classList.toggle("on", on);
+        b.setAttribute("aria-selected", String(on));
+      });
+      renderSubjBody(SUBJ[SUBJ_ATUAL]);
+      break;
+    case "read":     go("read", { id:t.dataset.id }); break;
     case "reveal":   revealAnswer(); break;
     case "skip":
       slideOut("out-up", () => { Q.i++; Q.revealed = false; drawStudy(true); });
@@ -659,7 +761,9 @@ function finishStudy(){
 
 /* teclado (desktop) */
 document.addEventListener("keydown", e => {
-  if (VIEW !== "study" || $("#sheet").classList.contains("on")) return;
+  if ($("#sheet").classList.contains("on")) return;
+  if (VIEW === "read" && e.key === "Escape"){ closeRead(); return; }
+  if (VIEW !== "study") return;
   if (e.key === " " || e.key === "Enter"){
     e.preventDefault();
     if (!Q.revealed) revealAnswer(); else doGrade(3);

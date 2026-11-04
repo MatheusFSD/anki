@@ -468,6 +468,77 @@ a{color:var(--ink);text-decoration:none}
 .toast.on{opacity:1;transform:translateX(-50%)}
 .empty{text-align:center;color:var(--ink-faint);padding:40px 20px;font-size:14px}
 
+/* ---------- abas (Baralhos / Resumos) ---------- */
+.tabs{
+  display:flex;margin:22px 0 0;overflow:hidden;
+  background:var(--panel-soft);border:3px solid var(--panel-border);border-radius:var(--radius-md);
+  box-shadow:3px 3px 0 var(--shadow-ink);
+}
+.tabs button{
+  flex:1;padding:11px 8px;font-family:var(--font-display);font-size:13px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);
+  border-left:3px solid var(--panel-border);transition:background .15s, color .15s;
+}
+.tabs button:first-child{border-left:0}
+.tabs button.on{background:var(--c1);color:#f7eeda;text-shadow:1px 1px 0 rgba(0,0,0,.35)}
+.lsn-sum{margin:10px 0 0;font-size:13.5px;line-height:1.5;color:var(--ink-dim)}
+
+/* ---------- leitura: resumo da aula ---------- */
+.read{
+  background:var(--panel);border:3px solid var(--panel-border);border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-deep);padding:0 17px 14px;margin:16px 0 20px;overflow:hidden;
+  font-size:15.5px;line-height:1.7;
+}
+/* título de seção: faixa de ponta a ponta, como um cabeçalho de coluna da revista */
+.read h3{
+  font-family:var(--font-display);font-weight:400;font-size:18px;line-height:1.2;
+  text-transform:uppercase;letter-spacing:.03em;color:var(--ink);
+  margin:28px -17px 14px;padding:10px 17px;background:var(--panel-soft);
+  border-top:3px solid var(--panel-border);border-bottom:3px solid var(--panel-border);
+}
+.read h3:first-child{margin-top:0;border-top:0}
+.read h4{
+  font-family:var(--font-display);font-weight:400;font-size:14.5px;line-height:1.25;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--danger);margin:24px 0 8px;
+}
+.read p{margin:0 0 12px}
+.read ul,.read ol{margin:0 0 14px;padding-left:22px}
+.read li{margin-bottom:6px}
+.read li::marker{color:var(--danger);font-weight:600}
+.read b{font-weight:600}
+.read code{
+  background:var(--panel-soft);border:2px solid var(--panel-border);border-radius:var(--radius-sm);
+  padding:0 5px;font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  line-height:1.7;white-space:nowrap;
+}
+.read pre{
+  margin:12px 0 16px;padding:12px 14px;overflow-x:auto;white-space:pre;tab-size:4;
+  background:var(--panel-soft);border:3px solid var(--panel-border);border-radius:var(--radius-md);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.5;
+}
+.read table{width:100%;border-collapse:collapse;margin:12px 0 16px;font-size:13.5px;display:block;overflow-x:auto}
+.read table tr{border-bottom:2px solid var(--panel-soft)}
+.read table tr:first-child{border-bottom:3px solid var(--panel-border)}
+.read th{
+  text-align:left;padding:6px 10px 6px 0;color:var(--ink-faint);font-size:10px;
+  text-transform:uppercase;letter-spacing:.08em;font-weight:600;white-space:nowrap;
+}
+.read td{padding:7px 10px 7px 0;vertical-align:top;line-height:1.5}
+/* caixas: exemplo simples e "para guardar" */
+.read .ex,.read .dica{
+  margin:14px 0 16px;padding:11px 14px 12px;font-size:15px;line-height:1.62;
+  background:var(--panel-soft);border:3px solid var(--panel-border);
+  border-left-width:8px;border-radius:var(--radius-md);
+}
+.read .ex  {border-left-color:var(--c1,var(--gold))}
+.read .dica{border-left-color:var(--gold)}
+.read .ex::before,.read .dica::before{
+  display:block;margin-bottom:4px;font-family:var(--font-display);font-size:10.5px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--danger);
+}
+.read .ex::before  {content:"Exemplo simples"}
+.read .dica::before{content:"Para guardar";color:var(--ink-dim)}
+
 /* ===========================================================
    ANIMAÇÕES
    =========================================================== */

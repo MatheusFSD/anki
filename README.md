@@ -3,12 +3,13 @@
 Aplicativo web de flashcards com **repetição espaçada** (algoritmo SM-2, no estilo do Anki),
 gerado a partir dos slides e listas de exercícios de duas disciplinas da UFF.
 
-**412 cartões**, organizados por matéria → aula.
+**488 cartões**, organizados por matéria → aula. Algumas aulas também têm um **resumo em
+linguagem simples**, com exemplos do dia a dia, na aba **Resumos** (veja [abaixo](#resumos-das-aulas)).
 
-| Matéria | Código | Aulas | Cartões |
-|---|---|---|---|
-| Gerência de Projetos e Manutenção de Software | TCC00363 | 10 | 177 |
-| Redes de Computadores para Sistemas de Informação | TCC00359 | 10 | 235 |
+| Matéria | Código | Aulas | Cartões | Resumos |
+|---|---|---|---|---|
+| Gerência de Projetos e Manutenção de Software | TCC00363 | 12 | 253 | Aulas 9 e 10 |
+| Redes de Computadores para Sistemas de Informação | TCC00359 | 10 | 235 | — |
 
 ## Como funciona
 
@@ -29,6 +30,20 @@ No computador dá para usar o teclado: **espaço/enter** revela e responde "Bom"
 No celular há vibração leve ao responder, e o cartão sai deslizando — para o lado quando você erra,
 para cima quando acerta. Quem tiver "reduzir movimento" ligado no sistema recebe a versão sem animações
 (`prefers-reduced-motion`).
+
+## Resumos das aulas
+
+Dentro de uma matéria com resumos aparecem duas abas: **Baralhos** (as aulas e seus cartões) e
+**Resumos** (a explicação da aula, para ler antes de estudar os cartões).
+
+- Cada aula com resumo mostra o tempo estimado de leitura; na aba Baralhos ela ganha o botão
+  **📖 Ler o resumo**
+- O texto traz seções numeradas, tabelas e caixas de **exemplo simples** e **para guardar**
+- No fim da leitura há um botão para **estudar os cartões daquela aula**
+- **Esc** (ou a seta ‹) volta para a matéria, na mesma aba em que você estava
+- Matérias sem nenhum resumo escrito (hoje, Redes) não mostram as abas
+
+Hoje há resumos de **GPMS — Aula 9** (Gerência de Configuração, parte 2) e **Aula 10** (parte 3).
 
 ## Progresso (sem banco de dados)
 
@@ -126,8 +141,9 @@ Basta abrir o `index.html` no navegador — não há build nem dependências al�
 ```
 index.html            estrutura da página
 css/style.css         estilos (mobile first, tema claro/escuro)
-js/data-gpms.js       177 cartões de GPMS
+js/data-gpms.js       253 cartões de GPMS
 js/data-redes.js      235 cartões de Redes
+js/resumos-gpms.js    resumos em linguagem simples das aulas de GPMS
 js/sync.js            leitura/escrita do JSON no repositório (API do GitHub)
 js/app.js             agendador SM-2, telas e persistência
 dados/progresso.json  progresso sincronizado
@@ -145,3 +161,20 @@ Os cartões ficam em `js/data-gpms.js` e `js/data-redes.js`:
 O `id` de cada cartão é derivado do **texto da pergunta**, então reordenar cartões ou aulas
 preserva o progresso — mas **editar a pergunta** faz o cartão ser tratado como novo
 (a resposta pode ser alterada à vontade). Tabelas, `<code>`, `<sup>` e `<br>` funcionam nas respostas.
+
+### Adicionar um resumo
+
+Em `js/resumos-gpms.js`, a chave é o `id` da aula em `data-gpms.js` (ex.: `"gpms-a9"`):
+
+```js
+"gpms-a9": {
+  resumo: "Frase curta que aparece na lista da aba Resumos.",
+  html: `<h3>1. Título da seção</h3><p>Texto…</p>
+         <div class="ex">Exemplo simples…</div>
+         <div class="dica">Algo para guardar…</div>`
+}
+```
+
+O `html` aceita `<h3>`, `<h4>`, `<p>`, listas, `<table>`, `<code>` e `<pre>`. Dentro de um `<pre>`,
+escreva a barra invertida em dobro (`\\`), por causa dos *template literals*. Para outra matéria,
+crie um arquivo parecido e ligue-o em `app.js` do mesmo jeito que `RESUMOS_GPMS`.
