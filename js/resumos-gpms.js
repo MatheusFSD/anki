@@ -5,6 +5,154 @@
    Dentro de <pre>, barra invertida precisa ser escrita em dobro (\\). */
 const RESUMOS_GPMS = {
 
+"gpms-a8": {
+  resumo: "Git do zero: repositório, staging area, commit, histórico, ramos, merge com conflito, repositórios remotos (pull, push, clone) e os jeitos de uma equipe usar o Git.",
+  html: `
+<h3>1. Recapitulando: por que Gerência de Configuração</h3>
+<p>A <b>Gerência de Configuração (GC)</b> existe para <b>controlar a evolução</b> do software (Susan Dart, 1991): saber o que mudou, quando, por quem e por quê. Os benefícios (menos retrabalho, memória da organização, trilha de auditoria etc.) estão listados no resumo da Aula 9.</p>
+<p>A GC tem história própria:</p>
+<table>
+<tr><th>Época</th><th>O que acontecia</th></tr>
+<tr><td><b>Anos 50</b></td><td>GC para produzir aviões de guerra e naves espaciais</td></tr>
+<tr><td><b>Anos 60 e 70</b></td><td>Surge a GC de <b>software</b> (GCS), ainda com foco militar e aeroespacial</td></tr>
+<tr><td><b>Anos 80 e 90</b></td><td>Surgem as primeiras <b>normas internacionais</b> (MIL, EIA, IEEE, ISO…) e empresas comuns passam a usar</td></tr>
+</table>
+<p>Por que controlar <b>versões</b> dos artefatos? Por dois motivos: <b>evolução</b> (o artefato muda com o tempo) e <b>colaboração</b> (várias pessoas mexem nele).</p>
+<div class="ex">Trabalho em grupo: a <b>evolução</b> é lembrar como estava o texto na semana passada; a <b>colaboração</b> é três pessoas escreverem no mesmo texto sem uma apagar o que a outra fez. O controle de versões resolve os dois.</div>
+
+<h3>2. Git e GitHub: não são a mesma coisa</h3>
+<ul>
+<li><b>Git</b>: a ferramenta de controle de versões, que roda na sua máquina.</li>
+<li><b>GitHub, GitLab e Bitbucket</b>: serviços que hospedam repositórios Git na internet e acrescentam recursos (issues, pull requests…).</li>
+</ul>
+<p>Para instalar: no Linux (Debian/Ubuntu) <code>sudo apt install git</code>; no Windows, <b>gitforwindows.org</b>; no Mac, <code>brew install git</code>. Para pedir ajuda: <code>git help</code> (geral) ou <code>git help &lt;comando&gt;</code>.</p>
+
+<h3>3. Configurando o Git</h3>
+<p>Antes de tudo, diga ao Git quem você é, para que cada alteração leve o seu nome:</p>
+<pre>git config --global user.name
+  &lt;seu nome&gt;
+git config --global user.email
+  &lt;seu email&gt;</pre>
+<table>
+<tr><th>Nível</th><th>Vale para…</th></tr>
+<tr><td><code>--system</code></td><td>o sistema inteiro</td></tr>
+<tr><td><code>--global</code></td><td>o usuário logado</td></tr>
+<tr><td><code>--local</code></td><td>só o repositório do projeto</td></tr>
+</table>
+<div class="dica">Se o mesmo item é configurado em mais de um nível, a lista do slide vai do mais geral (<i>system</i>) ao mais específico (<i>local</i>). Na prática, o repositório pode ter uma configuração só dele.</div>
+
+<h3>4. O primeiro commit</h3>
+<p>O <b>repositório</b> é o lugar onde ficam as versões e o histórico dos artefatos monitorados. Crie um e veja o estado:</p>
+<pre>$ git init suaveintro
+$ git status</pre>
+<p>Se você criar o arquivo <code>programa.py</code>, o <code>git status</code> mostra que ele é <b>não rastreado</b>: está só no <b>espaço de trabalho</b>, ainda não tem versão no repositório.</p>
+<p>Para guardar a primeira versão, o arquivo passa por três lugares:</p>
+<pre> espaço de trabalho
+      | git add
+      v
+ staging area
+      | git commit
+      v
+ repositório</pre>
+<ul>
+<li><b>Staging area</b>: a “bandeja” dos arquivos que você pretende enviar. <code>git add programa.py</code> coloca o arquivo nela: ainda não está no repositório, mas está pronto.</li>
+<li><b>Commit</b>: <code>git commit -m "mensagem"</code> envia o que está na bandeja para o repositório, criando uma versão.</li>
+</ul>
+<div class="ex">Pense em despachar uma encomenda: o arquivo na sua mesa é o espaço de trabalho; colocar na caixa é o <code>add</code>; fechar a caixa e levar ao correio, com uma etiqueta descrevendo o conteúdo, é o <code>commit -m</code>.</div>
+
+<h3>5. Versões e histórico</h3>
+<h4>Como cada ferramenta numera os commits</h4>
+<table>
+<tr><th>Ferramenta</th><th>Identificador do commit</th></tr>
+<tr><td>CVS</td><td>número sequencial <b>por arquivo</b></td></tr>
+<tr><td>Subversion</td><td>número sequencial <b>por repositório</b></td></tr>
+<tr><td>Git e Mercurial</td><td>um <b>hash</b></td></tr>
+</table>
+<h4>Olhando o histórico</h4>
+<ul>
+<li><code>git log</code>: histórico do repositório local (com <code>--graph</code> ele desenha os ramos).</li>
+<li><code>git show</code>: mostra um commit.</li>
+<li><code>git diff</code>: compara o espaço de trabalho com a staging area ou com uma versão do repositório.</li>
+</ul>
+<pre>print("hello")      &lt;- versão 1
+print("world")      &lt;- trocou
+$ git add .
+$ git commit -m
+  "adiciona palavra world"
+$ git log --graph</pre>
+<h4>Apelidos e rótulos</h4>
+<ul>
+<li><b>HEAD</b>: a versão base do seu espaço de trabalho (“onde você está”).</li>
+<li><b>master</b> ou <b>main</b>: o ramo principal.</li>
+<li><b>Tags</b>: rótulos em versões especiais. <code>git tag</code> lista; <code>git tag v1.0</code> cria sobre o HEAD (ou sobre um commit informado); <code>git tag -d v1.0</code> remove.</li>
+</ul>
+<p>Os três tipos de versão (revisão, variante e cooperação) já foram vistos na Aula 9; a Aula 8 os usa para explicar por que um repositório precisa de ramos.</p>
+
+<h3>6. Ramos e merge</h3>
+<p>Um <b>ramo</b> é uma linha de desenvolvimento paralela. Para que servem (corrigir bug sem mexer na principal, separar projetos, manter versões alternativas, colaborar) está no resumo da Aula 10. Os comandos:</p>
+<table>
+<tr><th>Comando</th><th>O que faz</th></tr>
+<tr><td><code>git branch --all -v</code></td><td>lista os ramos</td></tr>
+<tr><td><code>git branch &lt;nome&gt;</code></td><td>cria um ramo a partir do HEAD</td></tr>
+<tr><td><code>git branch -d &lt;nome&gt;</code></td><td>remove um ramo</td></tr>
+<tr><td><code>git checkout &lt;ramo ou commit&gt;</code></td><td>troca a versão base do espaço de trabalho</td></tr>
+<tr><td><code>git merge &lt;ramo&gt;</code></td><td>combina um ramo com o ramo corrente</td></tr>
+</table>
+<h4>Quando o merge dá conflito</h4>
+<p>Se os dois ramos mudaram o mesmo trecho, o Git não sabe qual vale e <b>marca o arquivo</b>:</p>
+<pre>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+print("hello world!")
+=======
+palavras = ["hello",
+            "world"]
+print(" ".join(palavras))
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; palavras</pre>
+<p>Acima do <code>=======</code> está a versão do ramo em que você está (HEAD); abaixo, a do ramo que você está trazendo. Você <b>edita o arquivo</b>, apaga as marcas e deixa o resultado que quer; depois faz <code>git add</code> do arquivo e <code>git commit -m "Merge entre master e palavras"</code>.</p>
+<div class="ex">Dois colegas reescreveram a mesma frase de um trabalho, cada um do seu jeito. O Git mostra as duas versões lado a lado e pede: “decidam”. Quem resolve é uma pessoa.</div>
+
+<h3>7. Repositórios remotos</h3>
+<p>Até aqui tudo estava na sua máquina. Para compartilhar, usa-se um <b>repositório remoto</b> (por exemplo, no GitHub).</p>
+<table>
+<tr><th>Comando</th><th>O que faz</th></tr>
+<tr><td><code>git remote -v</code></td><td>lista os remotos cadastrados</td></tr>
+<tr><td><code>git remote add &lt;nome&gt; &lt;url&gt;</code></td><td>cadastra um remoto</td></tr>
+<tr><td><code>git remote remove &lt;nome&gt;</code></td><td>remove um remoto</td></tr>
+<tr><td><code>git pull</code></td><td>atualiza o seu repositório local e o espaço de trabalho com o que está no remoto</td></tr>
+<tr><td><code>git push</code></td><td>envia o seu repositório local para o remoto</td></tr>
+<tr><td><code>git clone &lt;url&gt;</code></td><td>cria um repositório local copiando o histórico do remoto e define o <b>origin</b> como remoto</td></tr>
+</table>
+<div class="dica">Guarde a direção: <b>pull</b> traz, <b>push</b> leva, <b>clone</b> é a primeira cópia inteira. Também existem interfaces gráficas, como o SourceTree, que fazem tudo isso com cliques.</div>
+
+<h3>8. Um pouco de história e as formas de usar o Git</h3>
+<table>
+<tr><th>Época</th><th>Tipo</th><th>Exemplos</th></tr>
+<tr><td>Anos 70/80</td><td>Sistemas <b>locais</b></td><td>SCCS (1972), RCS (1982)</td></tr>
+<tr><td>Anos 80/90</td><td><b>Cliente-servidor</b></td><td>CVS (1986), Subversion (2000)</td></tr>
+<tr><td>Anos 2000</td><td><b>Peer-to-peer</b></td><td>Git (2005), Mercurial (2005)</td></tr>
+</table>
+<p>Mesmo sendo peer-to-peer, as equipes costumam combinar um <b>workflow</b> conforme o projeto:</p>
+<ul>
+<li><b>Individual</b>: só você usa o repositório.</li>
+<li><b>Cliente-servidor</b>: todos enviam para um repositório central.</li>
+<li><b>Gerente de integração</b> (fork + pull request): cada um trabalha na sua cópia e pede para o gerente integrar. Exemplo: github.com/nodejs/node.</li>
+<li><b>Ditador/tenentes</b> (pull request em cascata): os pedidos passam por uma hierarquia até chegar ao responsável final. Exemplo: github.com/torvalds/linux.</li>
+</ul>
+
+<h3>9. Para o trabalho (Rodada 1)</h3>
+<p>A Rodada 1 (Planejamento) pede:</p>
+<ol>
+<li><b>Documento de Visão</b> do produto.</li>
+<li><b>Escopo do produto</b> (requisitos) e <b>escopo do projeto</b> (EAP).</li>
+<li><b>Papéis</b> definidos no grupo.</li>
+<li><b>Estimativas de esforço</b> (Planning Poker sobre os pacotes de trabalho da EAP).</li>
+<li><b>Custo, orçamento e cronograma</b> (Gantt).</li>
+<li><b>Análise de riscos completa</b>: listagem, probabilidade × impacto, priorização por exposição, planos de contenção e de contingência.</li>
+<li><b>Dados de monitoramento e controle</b> já disponíveis: burndown dentro de cada iteração e Análise de Valor Agregado ao final de cada uma.</li>
+<li><b>Demonstração (v1)</b> da versão parcial do produto.</li>
+</ol>
+`
+},
+
 "gpms-a9": {
   resumo: "O que é GC, os 5 processos, controle de versões (tipos, topologias, armazenamento, colaboração) e controle de modificações — com exemplos do dia a dia.",
   html: `
@@ -461,6 +609,370 @@ bugfix      *----*----*</pre>
 <li>O time tem testes automatizados e CI? (GitHub Flow) Há ciclos de release definidos? (GitFlow)</li>
 </ul>
 <div class="dica">A dica do slide vale aqui: <b>tem que fazer sentido para o projeto!</b> Escolha a estratégia mais simples que resolva o seu caso e justifique a escolha na apresentação.</div>
+`
+},
+
+"gpms-a11": {
+  resumo: "A última parte do caminho: colocar em produção. DevOps, release × configuração, integração contínua, entrega × deployment contínuo, como escolher a estratégia de ramificação, commits, pull requests, code review e milestones.",
+  html: `
+<h3>1. Onde estamos no projeto</h3>
+<p>Já temos processo, requisitos, projeto e arquitetura, testes com boa cobertura e gerenciamento. Falta a <b>última parte: colocar em produção</b>, ou seja, <b>implantar o sistema</b>. Porque, como diz o slide, “para agregar valor, alguém tem que usar!”.</p>
+
+<h3>2. Dev × Ops e o DevOps</h3>
+<p>Antigamente havia dois grupos separados, quase sem conversa:</p>
+<table>
+<tr><th>Dev</th><th>Ops</th></tr>
+<tr><td>Departamento de Sistemas / Desenvolvimento: desenvolvedores, programadores, analistas, arquitetos</td><td>Departamento de Suporte / Operações: administradores de rede e de bancos de dados, técnicos de suporte e de infraestrutura</td></tr>
+</table>
+<div class="ex">O programa funciona no computador do desenvolvedor. Quando vai para o servidor, quebra. O Dev diz “o problema é o seu servidor”; o Ops responde “o problema é o seu código”. Esse é o <b>jogo de empurra</b>.</div>
+<p>A ideia central do <b>DevOps</b> é <b>aproximar Dev e Ops</b>, com dois objetivos:</p>
+<ol>
+<li><b>Passagem de bastão bem-sucedida</b>: a implantação começa o quanto antes e é automatizada.</li>
+<li><b>Acabar com o jogo de empurra</b>.</li>
+</ol>
+<div class="dica">DevOps <b>não</b> é um profissional novo que faz tudo. É uma <b>aproximação</b> entre desenvolvimento e operações para a implantação ser mais ágil e menos traumática.</div>
+<table>
+<tr><th>Princípios</th><th>Práticas</th></tr>
+<tr><td>Aproximar Devs e Ops desde o início<br>Adotar princípios ágeis na implantação<br>Transformar implantações em um <b>não-evento</b><br>Implantar (partes do) sistema <b>todos os dias</b><br>Automatizar a implantação</td><td>Controle de versões<br>Integração contínua<br>Estratégias de branch<br>Deployment contínuo<br>Feature flags</td></tr>
+</table>
+<h4>6 recomendações para automatizar a implantação</h4>
+<ol>
+<li>Crie um processo <b>repetível e confiável</b> de entrega.</li>
+<li><b>Automatize</b> tudo que for possível.</li>
+<li>Mantenha tudo em <b>controle de versões</b>.</li>
+<li>Se um passo causa dor, <b>faça-o com mais frequência</b> e o quanto antes.</li>
+<li><b>Concluído</b> significa <b>pronto para entrega</b>.</li>
+<li><b>Todos</b> são responsáveis pela entrega.</li>
+</ol>
+<div class="ex">Se subir uma versão é um sufoco, a tentação é fazer isso o mínimo possível. A regra 4 manda o contrário: suba toda hora. Subir todo dia obriga a automatizar, e com o processo automático a dor some.</div>
+
+<h3>3. Releases</h3>
+<p>O <b>gerenciamento de releases</b> é a descrição de <b>como construir, liberar e entregar</b> o sistema. Ela existe em linguagem natural (conhecimento) e em linguagem computacional (automação), fica sob gerência de configuração e define quando o processo pode ser desviado temporariamente.</p>
+<div class="dica">Cuidado com releases curtas demais: a necessidade de lançar rápido, somada a testes manuais e equipe pequena, deixa a cobertura de testes baixa. Isso gera defeitos no produto final, que geram pedidos de correção, que pedem novas releases… um <b>círculo vicioso</b>.</div>
+<h4>Configuração × release</h4>
+<table>
+<tr><th></th><th>Configuração</th><th>Release</th></tr>
+<tr><td><b>O que é</b></td><td>conjunto de versões de ICs, com <b>uma versão por IC</b></td><td>uma configuração que passou por <b>processo adicional</b></td></tr>
+<tr><td><b>Exemplo</b></td><td>login v2.3, relatórios v1.7, banco v45, autenticação v3.1.2</td><td>essa mesma configuração, depois de testada, aprovada e entregue como “v2.0”</td></tr>
+<tr><td><b>Traz</b></td><td>um retrato coerente do sistema</td><td>intenção de entrega, verificação formal, identidade pública e compromisso de suporte</td></tr>
+</table>
+<p>Quando a configuração passa em todos os testes e está pronta para o cliente, ela vira um <b>Release Candidate</b>. Se aprovada, recebe um nome (“v2.0”) e é entregue a alguém de fora da equipe: aí sim é uma <b>release</b>.</p>
+
+<h3>4. Integração contínua (CI)</h3>
+<p>Segundo Martin Fowler, o único pré-requisito para um desenvolvedor lançar suas alterações na versão principal é <b>conseguir executar perfeitamente o código</b>, passando pelos testes do build. O fluxo: atualiza a cópia de trabalho, resolve conflitos, gera o build na máquina local; se passar, libera.</p>
+<p>Antigamente eram comuns as <b>feature branches</b> longas. Depois de uns 40 dias isolada, a branch voltava e dava o <b>integration hell</b>: conflitos por todo lado.</p>
+<div class="ex">Cada colega escreve um capítulo do trabalho por 40 dias, sem ler o do outro. Na hora de juntar, os capítulos se contradizem e cada um usa um estilo. Se juntassem todo dia, os problemas apareceriam pequenos.</div>
+<p><b>Integração Contínua</b>: os membros da equipe <b>integram o trabalho com frequência</b> (em geral, pelo menos uma vez por dia) e <b>cada integração é verificada por um build automatizado, com testes</b>, para achar erros de integração o mais cedo possível. É uma prática do <b>XP</b>. Não há consenso sobre a frequência, mas a maioria dos autores recomenda <b>pelo menos 1 vez por dia</b>. Pode incluir build automatizado, testes automatizados e programação em pares.</p>
+<p>No <b>GitHub Actions</b> você configura o fluxo; ele roda a cada alteração e gera um <b>log</b>. Passou? Pode confirmar. Falhou? Leia o log, corrija e tente de novo antes de integrar.</p>
+
+<h3>5. Entrega × deployment contínuo</h3>
+<table>
+<tr><th></th><th>Entrega contínua</th><th>Deployment contínuo</th></tr>
+<tr><td><b>Todo commit…</b></td><td><b>pode</b> entrar em produção imediatamente</td><td>que chega no master <b>entra</b> em produção, em questão de horas</td></tr>
+<tr><td><b>Quem decide?</b></td><td>uma <b>autoridade externa</b> decide quando liberar aos usuários</td><td>ninguém precisa decidir: é automático</td></tr>
+</table>
+<p>Para fixar: <b>deployment</b> é liberar uma versão para os <b>usuários</b>; <b>delivery</b> é liberar uma versão para ser <b>objeto de deployment</b>. Em ambos, os desenvolvedores programam como se tudo fosse para produção.</p>
+<h4>Ciclos de release reais</h4>
+<ul>
+<li><b>Chrome</b>: uma release a cada <b>4 semanas</b>.</li>
+<li><b>Facebook (Android)</b>: a cada <b>8 semanas</b>, no estudo citado.</li>
+<li><b>Eclipse</b>: <b>uma por ano</b> até 2019.</li>
+</ul>
+
+<h3>6. Como escolher a estratégia de ramificação</h3>
+<p>As estratégias estão no resumo da Aula 10. Quatro perguntas ajudam a escolher:</p>
+<ol>
+<li>Quantas <b>versões</b> precisam estar em produção ao mesmo tempo?</li>
+<li>Com que <b>frequência</b> o software deve chegar ao usuário?</li>
+<li>Qual a <b>maturidade, tamanho e organização</b> do time?</li>
+<li>Qual o <b>perfil de risco e de regulamentação</b> do projeto?</li>
+</ol>
+<div class="dica">Tem que <b>fazer sentido para o projeto</b>. As mesmas perguntas servem para justificar a escolha na Rodada 2.</div>
+
+<h3>7. Controle de modificações no GitHub</h3>
+<p>As 7 atividades do controle de modificações (solicitação, classificação, análise de impacto, avaliação, implementação, verificação, atualização da baseline) estão no resumo da Aula 9. Aqui elas ganham ferramentas do GitHub.</p>
+<h4>Mensagem de commit</h4>
+<p>O slide sugere o modelo:</p>
+<pre>&lt;tipo&gt; [issue]: &lt;descrição&gt;</pre>
+<ul>
+<li><b>Tipo</b>: fix, feat, build, ci, refactor, test…</li>
+<li><b>Issue</b>: o número da issue no GitHub.</li>
+<li><b>Descrição</b>: no presente do imperativo, em inglês. Teste: “If this commit is accepted, it will <i>Implement fizzbuzz</i>”.</li>
+</ul>
+<div class="ex">fix [#12]: handle empty cart on checkout<br>feat [#15]: add Pix payment</div>
+<h4>Pull request (verificação da modificação)</h4>
+<p>O <b>pull request</b> serve para a mudança ser <b>inspecionada antes de ser integrada</b>. Pode ser criado de duas formas: pela forma completa, selecionando a versão para comparar, ou a partir de um <b>push recente</b>. Um pull request <b>é uma issue</b>, dá para ver o que mudou (o que entrou e o que saiu) e, na atualização da baseline, a issue é <b>fechada</b>.</p>
+<h4>Code review: quem revisa o código?</h4>
+<table>
+<tr><th>#</th><th>Estratégia</th></tr>
+<tr><td>1</td><td>Sem revisão</td></tr>
+<tr><td>2</td><td>Humanos revisam tudo</td></tr>
+<tr><td>3</td><td>IAs revisam tudo</td></tr>
+<tr><td>4</td><td>Humanos revisam as revisões feitas por IA</td></tr>
+<tr><td>5</td><td><b>Triagem por impacto</b>: baixo risco sem revisão humana; alto risco, com</td></tr>
+<tr><td>6</td><td>Revisar <b>plano, testes e esquema do banco</b>, não a implementação (olhar o “antes” e o “depois”)</td></tr>
+<tr><td>7</td><td><b>Produzir menos código</b>: PRs menores, mais fáceis de revisar</td></tr>
+</table>
+<p>Antes de decidir, o slide manda lembrar <b>por que</b> revisamos código.</p>
+<h4>Contabilização: milestones</h4>
+<p>Os <b>milestones</b> do GitHub agrupam issues em torno de um marco. Você cria o milestone, marca as issues que pertencem a ele e a lista mostra o andamento. Alimentam o <b>monitoramento e controle</b> do projeto.</p>
+<div class="ex">Um milestone por iteração: “Sprint 1”. As issues marcadas nele são o que se compromete a entregar. Quantas já foram fechadas diz como a iteração anda.</div>
+
+<h3>8. Para o trabalho e a próxima aula</h3>
+<p>Os itens da Rodada 2 estão no resumo da Aula 9. A <b>próxima aula é de dúvidas sobre a Rodada 2</b>.</p>
+`
+},
+
+"gpms-a12": {
+  resumo: "Por que a manutenção custa tanto, o que ela é, as 8 Leis de Lehman, manutenibilidade e os tipos de manutenção (emergencial, corretiva, preventiva, adaptativa, perfectiva), com exemplos e o papel da IA.",
+  html: `
+<h3>1. Por que falar de manutenção</h3>
+<p>Perguntas do início da aula: por quanto tempo uma equipe tem que manter o que já existe? Que casos famosos vêm à cabeça (sistemas que pararam, vazaram dados ou custaram milhões)? Quanto do trabalho de um dev é código novo?</p>
+<table>
+<tr><th>Número</th><th>Fonte</th></tr>
+<tr><td><b>90%</b> do custo total do software é manutenção</td><td>Erlikh (2000)</td></tr>
+<tr><td><b>60%</b> do esforço total</td><td>Pressman (1997)</td></tr>
+<tr><td><b>US$ 70 bi</b> por ano nos EUA</td><td>Edelstein (1993)</td></tr>
+<tr><td><b>250 bilhões</b> de linhas de código em manutenção</td><td>Sommerville (2000)</td></tr>
+</table>
+<h4>E a dívida técnica?</h4>
+<ul>
+<li><b>42%</b> do tempo dos desenvolvedores vai para dívida técnica e código ruim: 13,5 h + 3,8 h de uma semana de cerca de 41 h (Stripe/Harris Poll, 2018).</li>
+<li><b>US$ 2,41 tri</b>: custo estimado da baixa qualidade de software nos EUA.</li>
+<li><b>US$ 1,52 tri</b>: dívida técnica acumulada nos EUA, o maior obstáculo para mudar código existente (CISQ, 2022).</li>
+</ul>
+<div class="ex">Dívida técnica é como não lavar a louça: no começo, economiza tempo; com o tempo, a pia fica tão cheia que cozinhar leva o dobro. O “juro” é o tempo extra a cada mudança no código.</div>
+<div class="dica">Só <b>21%</b> do esforço de manutenção vai para <b>corrigir erros</b> (Bennett e Rajlich, 2000). Mesmo um sistema de qualidade precisa de manutenção: novas leis, novos requisitos, ficar mais fácil de entender e manter.</div>
+
+<h3>2. O que é manutenção de software</h3>
+<p>É o processo de <b>modificar o software depois de entregue</b> para corrigir falhas, melhorar desempenho ou outros atributos, ou adaptá-lo a mudanças no ambiente (IEEE; ISO/IEC 14764). Vai além de corrigir bug: inclui entender código, implementar funcionalidades, refatorar e modernizar linguagens e bibliotecas.</p>
+<div class="ex">Um carro não para de precisar de cuidado depois que sai da loja: troca de óleo (corretiva/preventiva), mudança para um novo combustível exigido por lei (adaptativa), som novo (perfectiva). Software que não evolui <b>perde valor</b> porque o mundo, os usuários e as dependências mudam.</div>
+<p>Manutenção é uma <b>disciplina</b> da Engenharia de Software, com normas (IEEE 1219, de 1993 e substituída em 2010; ISO/IEC 14764, atualizada em 2006), com processo (pedido de modificação, análise, implementação, testes, entrega) e com tópicos próprios: compreensão de código, refatoração, engenharia reversa, reengenharia, dívida técnica e gerência de configuração.</p>
+<h4>Linha do tempo</h4>
+<table>
+<tr><th>Ano</th><th>Marco</th></tr>
+<tr><td>1968</td><td>Conferência da OTAN: “engenharia de software” e “crise do software”</td></tr>
+<tr><td>1974</td><td>Lehman formula a 1ª lei da evolução (até 1996, serão 8)</td></tr>
+<tr><td>1976</td><td>Swanson: corretiva, adaptativa e perfectiva</td></tr>
+<tr><td>1978–80</td><td>Lientz e Swanson: survey com 487 organizações mostra o peso da manutenção</td></tr>
+<tr><td>1993</td><td>IEEE 1219; depois ISO/IEC 14764 (1999 e 2006), com 4 tipos</td></tr>
+<tr><td>1999–2000</td><td>Refactoring (Fowler) e o bug do milênio (Y2K)</td></tr>
+<tr><td>2009+</td><td>DevOps, integração e entrega contínuas</td></tr>
+<tr><td>2022+</td><td>LLMs, assistentes e agentes de código na manutenção</td></tr>
+</table>
+
+<h3>3. As Leis de Lehman (da evolução do software)</h3>
+<table>
+<tr><th>#</th><th>Lei</th><th>Em palavras simples</th></tr>
+<tr><td>1</td><td><b>Mudança contínua</b> (1974)</td><td>Se não for adaptado, o software fica cada vez menos satisfatório. Ex.: o app do banco precisa acompanhar o Pix.</td></tr>
+<tr><td>2</td><td><b>Complexidade crescente</b> (1974)</td><td>Cada remendo emaranha o código; se ninguém reduzir, só piora.</td></tr>
+<tr><td>3</td><td><b>Autorregulação</b> (1974)</td><td>A evolução tem um ritmo estável; as métricas de release ficam em torno de tendências.</td></tr>
+<tr><td>4</td><td><b>Conservação da estabilidade organizacional</b> (1978)</td><td>A taxa de trabalho efetiva fica quase constante, <b>independente do número de pessoas</b>. Lembra a Lei de Brooks.</td></tr>
+<tr><td>5</td><td><b>Conservação da familiaridade</b> (1978)</td><td>Todos precisam dominar o sistema, então cada release muda só um pouco.</td></tr>
+<tr><td>6</td><td><b>Crescimento contínuo</b> (1991)</td><td>Tem que ganhar funções para manter os usuários satisfeitos.</td></tr>
+<tr><td>7</td><td><b>Qualidade em declínio</b> (1996)</td><td>Software que não recebe as mudanças necessárias se deprecia.</td></tr>
+<tr><td>8</td><td><b>Sistema de feedback</b> (1996)</td><td>A evolução é um sistema de feedback com vários laços e vários agentes.</td></tr>
+</table>
+<p>Ligando as leis: a <b>mudança contínua</b> provoca <b>crescimento contínuo</b> e <b>complexidade crescente</b>; a complexidade, se ninguém cuida, provoca <b>declínio da qualidade</b> — e tudo isso afeta a <b>satisfação dos usuários</b>.</p>
+
+<h3>4. Manutenibilidade</h3>
+<p>Você pode passar mais tempo <b>lendo</b> código do que escrevendo, e mais tempo corrigindo do que criando. Por isso a manutenção também é uma <b>qualidade do software</b>: a <b>manutenibilidade</b> é o grau de eficácia e eficiência com que o software pode ser <b>modificado, corrigido ou aprimorado</b> (família ISO 25000). Suas subcaracterísticas respondem a perguntas simples:</p>
+<table>
+<tr><th>Subcaracterística</th><th>Pergunta</th></tr>
+<tr><td><b>Modularidade</b></td><td>Tem interfaces bem definidas?</td></tr>
+<tr><td><b>Reusabilidade</b></td><td>É fácil de reusar?</td></tr>
+<tr><td><b>Analisabilidade</b></td><td>É fácil de entender?</td></tr>
+<tr><td><b>Modificabilidade</b></td><td>É fácil de modificar?</td></tr>
+<tr><td><b>Testabilidade</b></td><td>É fácil de testar?</td></tr>
+</table>
+<h4>Quando começa a manutenção?</h4>
+<p><b>Depois da primeira release, tudo passa a ser manutenção</b>. “Programmers are constantly in maintenance mode” (The Pragmatic Programmer). Na prática, desenvolvimento, release e manutenção se <b>sobrepõem</b>: enquanto a versão 1 está em manutenção, a 2 está em desenvolvimento.</p>
+
+<h3>5. Os tipos de manutenção</h3>
+<pre>Manutenção
+ |-- Correção
+ |    |-- Emergencial
+ |    |-- Corretiva
+ |    '-- Preventiva
+ '-- Evolução
+      |-- Adaptativa
+      '-- Perfectiva</pre>
+<table>
+<tr><th>Tipo</th><th>Característica</th><th>Exemplo simples</th></tr>
+<tr><td><b>Emergencial</b></td><td>Não programada; mantém o sistema funcionando <b>temporariamente</b>; exige uma corretiva depois</td><td>O login caiu: um remendo rápido para voltar ao ar</td></tr>
+<tr><td><b>Corretiva</b></td><td><b>Reativa</b>; corrige o problema reportado e faz o software voltar a atender aos requisitos</td><td>O remendo é substituído pela correção de verdade</td></tr>
+<tr><td><b>Preventiva</b></td><td><b>Pró-ativa</b>; corrige problemas <b>latentes</b></td><td>Discord: o banco escolhido em 2017 passou a falhar com trilhões de mensagens</td></tr>
+<tr><td><b>Adaptativa</b></td><td>Mantém o software usável após mudanças no <b>ambiente</b></td><td>CNPJ alfanumérico da Receita Federal</td></tr>
+<tr><td><b>Perfectiva</b> (evolutiva)</td><td>Provê melhorias ao usuário e melhora atributos de qualidade</td><td>Adicionar exportação em PDF a pedido do cliente</td></tr>
+</table>
+<div class="dica">Quanto mais sucesso um software faz, mais bugs ele tende a ter: mais usuários, mais usos, mais pedidos.</div>
+
+<h3>6. Manutenção com IA</h3>
+<p>O primeiro prompt do ChatGPT (nov. 2022) foi corrigir um bug, e um survey com 132 engenheiros da Anthropic (ago. 2025) mostra várias tarefas ligadas à manutenção. Os desafios:</p>
+<ul>
+<li><b>Quem vai revisar</b> este código?</li>
+<li><b>Quem vai manter</b> este código?</li>
+<li><b>Dívida cognitiva</b>: a IA gera mais código do que somos capazes de entender.</li>
+</ul>
+
+<h3>7. Exercício em sala e Rodada 3</h3>
+<p><b>Exercício</b>: cada grupo pensa, no <b>seu projeto</b>, em cenários em que cada tipo de manutenção poderia ocorrer e entrega a <b>raiz do problema</b> e uma <b>possível solução</b>.</p>
+<p>A <b>Rodada 3 (Entrega Final)</b> pede: demonstração (v3) da versão final; dificuldades e decisões técnicas e de processo; histórico completo de versões; todos os dados de monitoramento e controle (burndown e EVM de todas as iterações); retrospectiva final do grupo; registro de participação individual. A entrega é <b>documento consolidado + v3 do produto + vídeo de apresentação</b>.</p>
+<p>A <b>próxima aula</b> trata de refatoração, engenharia reversa e reengenharia, e boas práticas.</p>
+`
+},
+
+"gpms-a13": {
+  resumo: "Classificando casos reais de manutenção, refatoração, engenharia reversa e reengenharia, código limpo (nomes, estilo, números mágicos), documentação e código flexível a mudanças.",
+  html: `
+<h3>1. Exercício: classifique o tipo de manutenção</h3>
+<p>A aula começou com 10 casos reais para classificar nos cinco tipos (emergencial, corretiva, preventiva, adaptativa e perfectiva):</p>
+<table>
+<tr><th>Caso</th><th>Tipo</th></tr>
+<tr><td>Suporte ao Python 3.14 e fim do suporte ao 3.8 (psf/requests)</td><td><b>Adaptativa</b></td></tr>
+<tr><td>Corrigir falha ao rodar em Python sem o módulo ssl</td><td><b>Corretiva</b></td></tr>
+<tr><td>Atualização automática (Dependabot) de uma action do CI</td><td><b>Preventiva ou adaptativa</b> *</td></tr>
+<tr><td>Atualizar as regras do Makefile</td><td><b>Preventiva ou perfectiva</b></td></tr>
+<tr><td>Equifax: aplicar o patch do Apache Struts</td><td><b>Corretiva</b></td></tr>
+<tr><td>Migrar de Python 2 para 3 após o fim do suporte (jan/2020)</td><td><b>Adaptativa</b></td></tr>
+<tr><td>Exportar PDF no relatório mensal, a pedido do cliente</td><td><b>Perfectiva</b></td></tr>
+<tr><td>Remover código morto (Power Peg, Knight)</td><td><b>Preventiva</b></td></tr>
+<tr><td>Otimizar a consulta SQL que leva 8 s</td><td><b>Perfectiva</b></td></tr>
+<tr><td>Refatorar a classe Pedido (2.000 linhas) antes de nova regra</td><td><b>Preventiva ou perfectiva</b></td></tr>
+</table>
+<div class="dica">* A classificação do caso 3 é minha leitura (evita problemas futuros e acompanha o ambiente); o texto do slide ficou ilegível. Onde há “ou”, o que decide é a <b>intenção</b> da mudança.</div>
+
+<h3>2. Refatoração</h3>
+<p><b>Refatoração</b> é uma mudança na <b>estrutura interna</b> do software para torná-lo mais fácil de entender ou modificar, <b>sem alterar o comportamento externo</b> (Martin Fowler). É a forma de pagar a <b>dívida técnica</b>.</p>
+<div class="ex">Arrumar o guarda-roupa: as roupas são as mesmas e você veste a mesma coisa de manhã, mas agora acha tudo rápido. O comportamento externo não mudou; a estrutura interna, sim.</div>
+<h4>Quando refatorar: a Regra dos Três</h4>
+<ol>
+<li><b>Primeira vez</b> que você faz algo: simplesmente faça.</li>
+<li><b>Segunda vez</b> que faz algo parecido: sinta repulsa por repetir, mas faça de novo.</li>
+<li><b>Terceira vez</b>: comece a refatorar.</li>
+</ol>
+<div class="ex">Você copiou a validação de CPF em uma tela. Copiou em outra, a contragosto. Na terceira tela, pare e extraia uma função <code>validarCpf()</code> usada pelas três.</div>
+<p>Exemplo do slide: o AntennaPod era, em nov./2020, uma <i>Big Ball of Mud</i> (dependências circulares por todo lado); em maio/2024 já tinha a estrutura do código modernizada.</p>
+<h4>Como refatorar</h4>
+<p>Há um <b>catálogo com mais de 70 refatorações</b> (refactoring.com/catalog), disponíveis nas principais IDEs. Algumas: <b>Rename</b> Method/Field, <b>Remove Dead Code</b>, <b>Encapsulate</b> Field, <b>Move</b> Method/Field, <b>Extract</b> Method, <b>Pull Up</b> e <b>Push Down</b> Method/Field, <b>Replace Conditional With Polymorphism</b>.</p>
+<h4>Refatoração × otimização</h4>
+<table>
+<tr><th></th><th>Refatoração</th><th>Otimização</th></tr>
+<tr><td><b>Muda o comportamento?</b></td><td>Não</td><td>Não</td></tr>
+<tr><td><b>Mexe nas estruturas internas?</b></td><td>Sim</td><td>Sim</td></tr>
+<tr><td><b>Objetivo</b></td><td>Facilitar o entendimento e baratear alterações</td><td>Melhorar o desempenho</td></tr>
+<tr><td><b>Efeito colateral</b></td><td>—</td><td>Pode deixar o código mais difícil de manter</td></tr>
+</table>
+
+<h3>3. Engenharia reversa e sistemas legados</h3>
+<p>Sistemas legados costumam ter documentação desatualizada ou inexistente. A <b>engenharia reversa</b> gera a <b>documentação a partir do código</b>: requisitos, diagramas de casos de uso, de sequência, de transição de estados e de classes. A maioria das ferramentas CASE profissionais faz isso, em níveis diferentes.</p>
+<div class="ex">É como desenhar a planta de uma casa que já foi construída sem projeto: você percorre os cômodos e anota.</div>
+<div class="dica">Legado <b>não</b> é sinônimo de irrelevante. O <b>COBOL</b> (1959) é compilado, de alto nível e legível, e continua sustentando sistemas importantes (a aula citou os bancos dos EUA).</div>
+
+<h3>4. Reengenharia</h3>
+<h4>Por que migrar: obsolescência tecnológica</h4>
+<p>Com o tempo, a tecnologia envelhece: mainframe vira PC/cluster, COBOL e NATURAL viram Java e Python, DB2 e ADABAS viram Oracle, MySQL e PostgreSQL. Os motivos para migrar:</p>
+<ul>
+<li><b>Alto custo</b> para manter a tecnologia antiga.</li>
+<li>Dificuldade de <b>encontrar profissionais</b> capacitados.</li>
+<li>Dificuldade de <b>adaptar às demandas atuais</b> (móvel, web…).</li>
+</ul>
+<h4>O que é e quais os benefícios</h4>
+<p><b>Reengenharia</b> é <b>reconstruir o sistema</b> para melhorar desempenho, manutenibilidade, segurança, estrutura e entendimento, documentação. Na engenharia, vai-se da especificação ao sistema novo; na reengenharia, parte-se de um <b>sistema existente</b>, que é compreendido e transformado.</p>
+<table>
+<tr><th>Benefício</th><th>Como</th></tr>
+<tr><td><b>Reduzir a complexidade</b></td><td>Portar para nova plataforma, melhorar performance, extrair modelos, explorar novas tecnologias, reduzir dependências</td></tr>
+<tr><td><b>Reduzir riscos</b></td><td>Desenvolver o sistema do zero é arriscado (erros de especificação, problemas no desenvolvimento)</td></tr>
+<tr><td><b>Reduzir custos</b></td><td>Pode custar bem menos que reescrever; ferramentas automatizam parte do trabalho</td></tr>
+</table>
+<h4>Custo-benefício</h4>
+<p>Compara-se <b>quantitativamente</b>: manter como está (custo de suporte + manutenção, $$$$$) contra aplicar reengenharia (custo da reengenharia + suporte + manutenção, $$). Compensa quando o sistema tem <b>vida longa e pouca manutenibilidade</b>.</p>
+<p><b>Quando aplicar</b>: documentação obsoleta (ou inexistente); desenvolvedores saíram; conhecimento limitado do sistema; muito tempo para fazer mudanças; correção de defeitos frequente; problemas de manutenção constantes.</p>
+<h4>As 5 etapas</h4>
+<ol>
+<li><b>Análise de inventário</b>: priorizar as aplicações candidatas e alocar recursos.</li>
+<li><b>Reestruturação da documentação</b>: não fazer nada, documentar só as mudanças ou documentar o mínimo necessário.</li>
+<li><b>Engenharia reversa</b>: extrair informação do código (dados, processamento, interface).</li>
+<li><b>Reestruturação de código e dados</b>: melhora a qualidade <b>sem alterar a arquitetura</b>.</li>
+<li><b>Engenharia avante</b>: recupera o projeto, adiciona funcionalidades e <b>modifica a arquitetura</b>, gerando uma nova configuração do sistema.</li>
+</ol>
+
+<h3>5. Código limpo</h3>
+<h4>Entender custa caro</h4>
+<p>Num bloco de 100 linhas: implementar leva 3 h; mais 1 h para deixá-lo muito legível; a compreensão por outro dev cai de 30 para 27 min. No sistema inteiro, 1 milhão de linhas são cerca de <b>10 mil blocos</b>; metade recebe manutenção: 5 mil blocos × 12 h = <b>60 mil horas, cerca de 7 anos</b>.</p>
+<div class="dica">Ler &gt; escrever. Você escreve o código uma vez e ele é lido por vários devs, por anos. Vale dar mais trabalho agora para facilitar a leitura depois.</div>
+<h4>Estilo: guia, linter e formatador</h4>
+<table>
+<tr><th>Ferramenta</th><th>O que faz</th><th>Exemplos</th></tr>
+<tr><td><b>Guia de estilo</b></td><td>Regras de nomes, formatação e práticas</td><td>Google Java Style, PEP 8, Airbnb JS, PSR-12 (o TCC segue a ABNT)</td></tr>
+<tr><td><b>Linter</b></td><td>Checa o estilo automaticamente e aponta violações</td><td>CheckStyle (Java)</td></tr>
+<tr><td><b>Formatador</b></td><td>Corrige o formato sozinho</td><td>Prettier, Black, autopep8, clang-format, gofmt</td></tr>
+</table>
+<h4>Clareza nos nomes</h4>
+<ul>
+<li>Use <b>palavras de dicionário</b>: <code>s</code> vira <code>saldo</code>.</li>
+<li>Só abreviaturas muito conhecidas (getURL, ServidorHTTP).</li>
+<li><b>Quanto maior o escopo, maior o nome</b>: <code>i</code> num for; <code>taxaRetencaoClientesVIP</code> em escopo global.</li>
+<li><b>Classes</b> são substantivos (ListaEncadeada); evite genéricos como Resultado ou Gerenciador.</li>
+<li><b>Funções</b> começam com verbo (calcularFrete); booleanas explícitas (isAvailable, hasNext).</li>
+<li><b>Evite negações</b>: troque <code>isNotEmpty</code> por <code>hasElements</code>.</li>
+</ul>
+<h4>Números mágicos e nomes inconsistentes</h4>
+<pre>// ruim
+if (peso &lt;= 1.5)
+  frete = 0.315 * peso;
+
+// melhor
+LIMITE_PESO = 1.5
+FRETE_BASICO = 0.315
+if (peso &lt;= LIMITE_PESO)
+  frete = FRETE_BASICO * peso;</pre>
+<p>Quem lê <code>1.5</code> não sabe o que significa; <code>LIMITE_PESO</code> diz tudo e só precisa ser alterado em um lugar. Também evite <b>a mesma entidade com nomes diferentes</b> (na UFF, <i>Aluno</i> e <i>Estudante</i>; no iFood, <i>Restaurante</i> e <i>Estabelecimento</i>): escolha um e use sempre.</p>
+<h4>Outras dicas</h4>
+<ul>
+<li><b>Coesão e acoplamento</b>: funções coesas, com poucos parâmetros e sem <i>flags</i>.</li>
+<li><b>Command–Query Separation</b>: uma função é um <b>comando</b> ou uma <b>consulta</b>, nunca os dois.</li>
+<li><b>Erros</b>: sem <code>catch</code> vazio; trate ou falhe rápido.</li>
+</ul>
+
+<h3>6. Documentação</h3>
+<p>Linguagem natural é mais fácil de entender que um trecho de código, e o código <b>não se documenta sozinho</b>. Existem geradores de documentação (javadoc, Sphinx/pydoc, JSDoc, Doxygen, rustdoc). O slide cita Ousterhout: gastar um pouco de tempo extra (cerca de 10%) em bons comentários compensa. Comente para três públicos: <b>quem vai chamar</b> seu código (usuários da API), <b>quem vai mantê-lo</b> e as <b>LLMs</b> que vão gerar código chamando sua API.</p>
+<table>
+<tr><th>Tipo de comentário</th><th>Para quê</th></tr>
+<tr><td><b>Públicos</b></td><td>API, interface, referência: classes, métodos e atributos; para quem chama</td></tr>
+<tr><td><b>Privados</b></td><td>Implementação, inline: decisões e casos de borda; para quem mantém</td></tr>
+<tr><td><b>Licenças</b></td><td>Cabeçalho do arquivo (MIT, Apache…) com copyright e termos de uso</td></tr>
+<tr><td><b>TODO / FIXME</b></td><td>Com parcimônia; declaram <b>dívida técnica</b> (<i>self-admitted technical debt</i>)</td></tr>
+</table>
+<p>No Google, todo arquivo tem comentário de arquivo e toda classe e método públicos têm comentário.</p>
+<h4>O que escrever</h4>
+<ul>
+<li><b>Método</b>: 1 ou 2 frases do que faz, parâmetros, pré-condições, valor de retorno, exceções, efeitos colaterais e <b>exemplos de uso</b>. Ex.: <code>"hamburger".substring(4, 8)</code> retorna <code>"urge"</code>.</li>
+<li><b>Atributo</b>: a <b>unidade</b> e os <b>valores especiais</b>. Ex.: timeout em milissegundos; zero significa infinito.</li>
+<li><b>Classe</b>: <b>propósito + exemplo de uso</b>. Ex.: Stack é uma estrutura LIFO.</li>
+<li><b>Decisões</b>: registre o porquê. Ex.: “percorre cada string 16 vezes, mas são só 25 strings, então é rápido o bastante”. Evita que alguém refaça à toa.</li>
+</ul>
+<h4>Anti-padrões</h4>
+<ul>
+<li><b>Ruído</b>: repetir o óbvio (<code>// Cria um ArrayList</code> antes de criar um ArrayList).</li>
+<li><b>Parafrasear o código</b>: narrar o algoritmo linha a linha é só mais manutenção.</li>
+<li><b>Muleta de função grande</b>: em vez de <code>// calcula descontos</code>, <code>// calcula impostos</code>, <b>extraia funções</b> com bons nomes: <code>calcularDescontos()</code>, <code>calcularImpostos()</code>, <code>calcularFrete()</code>.</li>
+</ul>
+
+<h3>7. Código flexível a mudanças</h3>
+<table>
+<tr><th>Característica</th><th>Significa</th></tr>
+<tr><td><b>Baixo acoplamento</b></td><td>Alterar uma classe ou módulo não obriga a reescrever vários outros</td></tr>
+<tr><td><b>Alta coesão</b></td><td>Cada componente tem uma responsabilidade única e clara</td></tr>
+<tr><td><b>Abstrações e interfaces</b></td><td>Depender de contratos, não de implementações; facilita trocar tecnologias, bancos ou regras de negócio</td></tr>
+<tr><td><b>Legibilidade</b></td><td>Novos devs entendem rápido e alteram com segurança</td></tr>
+</table>
+<p>Boas práticas para chegar lá: princípios <b>SOLID</b> (responsabilidade única, inversão de dependência), <b>arquitetura modular</b> (blocos reutilizáveis, atualizados ou substituídos isoladamente) e <b>testes automatizados</b> (dão confiança para refatorar sem medo de introduzir bugs).</p>
+<div class="ex">Uma tomada padrão: você troca o aparelho sem mexer na parede, porque os dois dependem do <b>contrato</b> (o formato da tomada), não um do outro. É a ideia de depender de interfaces.</div>
+<p>Livro gratuito, em português, com exemplos práticos: <b>manutencaosoftware.org</b>.</p>
+
+<h3>8. Para o trabalho (Rodada 3)</h3>
+<p>Os itens da Rodada 3 (entrega final) estão no resumo da Aula 12.</p>
 `
 }
 

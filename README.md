@@ -3,12 +3,12 @@
 Aplicativo web de flashcards com **repetição espaçada** (algoritmo SM-2, no estilo do Anki),
 gerado a partir dos slides e listas de exercícios de duas disciplinas da UFF.
 
-**488 cartões**, organizados por matéria → aula. Algumas aulas também têm um **resumo em
+**562 cartões**, organizados por matéria → aula. Algumas aulas também têm um **resumo em
 linguagem simples**, com exemplos do dia a dia, na aba **Resumos** (veja [abaixo](#resumos-das-aulas)).
 
 | Matéria | Código | Aulas | Cartões | Resumos |
 |---|---|---|---|---|
-| Gerência de Projetos e Manutenção de Software | TCC00363 | 12 | 253 | Aulas 9 e 10 |
+| Gerência de Projetos e Manutenção de Software | TCC00363 | 16 | 327 | Aulas 8 a 13 |
 | Redes de Computadores para Sistemas de Informação | TCC00359 | 10 | 235 | — |
 
 ## Como funciona
@@ -43,7 +43,8 @@ Dentro de uma matéria com resumos aparecem duas abas: **Baralhos** (as aulas e 
 - **Esc** (ou a seta ‹) volta para a matéria, na mesma aba em que você estava
 - Matérias sem nenhum resumo escrito (hoje, Redes) não mostram as abas
 
-Hoje há resumos de **GPMS — Aula 9** (Gerência de Configuração, parte 2) e **Aula 10** (parte 3).
+Hoje há resumos das **aulas 8 a 13 de GPMS**: Git (aula 8), Gerência de Configuração (aulas 9, 10 e 11) e
+Manutenção de Software (aulas 12 e 13).
 
 ## Progresso (sem banco de dados)
 
@@ -141,7 +142,7 @@ Basta abrir o `index.html` no navegador — não há build nem dependências al�
 ```
 index.html            estrutura da página
 css/style.css         estilos (mobile first, tema claro/escuro)
-js/data-gpms.js       253 cartões de GPMS
+js/data-gpms.js       327 cartões de GPMS
 js/data-redes.js      235 cartões de Redes
 js/resumos-gpms.js    resumos em linguagem simples das aulas de GPMS
 js/sync.js            leitura/escrita do JSON no repositório (API do GitHub)
