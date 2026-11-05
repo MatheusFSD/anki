@@ -3,12 +3,12 @@
 Aplicativo web de flashcards com **repetição espaçada** (algoritmo SM-2, no estilo do Anki),
 gerado a partir dos slides e listas de exercícios de duas disciplinas da UFF.
 
-**562 cartões**, organizados por matéria → aula. Algumas aulas também têm um **resumo em
+**593 cartões**, organizados por matéria → aula. Algumas aulas também têm um **resumo em
 linguagem simples**, com exemplos do dia a dia, na aba **Resumos** (veja [abaixo](#resumos-das-aulas)).
 
 | Matéria | Código | Aulas | Cartões | Resumos |
 |---|---|---|---|---|
-| Gerência de Projetos e Manutenção de Software | TCC00363 | 16 | 327 | Aulas 8 a 13 |
+| Gerência de Projetos e Manutenção de Software | TCC00363 | 17 | 358 | Aulas 8 a 14 |
 | Redes de Computadores para Sistemas de Informação | TCC00359 | 10 | 235 | — |
 
 ## Como funciona
@@ -43,8 +43,9 @@ Dentro de uma matéria com resumos aparecem duas abas: **Baralhos** (as aulas e 
 - **Esc** (ou a seta ‹) volta para a matéria, na mesma aba em que você estava
 - Matérias sem nenhum resumo escrito (hoje, Redes) não mostram as abas
 
-Hoje há resumos das **aulas 8 a 13 de GPMS**: Git (aula 8), Gerência de Configuração (aulas 9, 10 e 11) e
-Manutenção de Software (aulas 12 e 13).
+Hoje há resumos das **aulas 8 a 14 de GPMS**: Git (aula 8), Gerência de Configuração (aulas 9, 10 e 11),
+Manutenção de Software (aulas 12 e 13) e a **revisão da aula 14**, que é uma página de perguntas e respostas
+com os 20 exercícios resolvidos (os slides trazem só os enunciados; as respostas são resolução própria).
 
 ## Progresso (sem banco de dados)
 
@@ -142,7 +143,7 @@ Basta abrir o `index.html` no navegador — não há build nem dependências al�
 ```
 index.html            estrutura da página
 css/style.css         estilos (mobile first, tema claro/escuro)
-js/data-gpms.js       327 cartões de GPMS
+js/data-gpms.js       358 cartões de GPMS
 js/data-redes.js      235 cartões de Redes
 js/resumos-gpms.js    resumos em linguagem simples das aulas de GPMS
 js/sync.js            leitura/escrita do JSON no repositório (API do GitHub)

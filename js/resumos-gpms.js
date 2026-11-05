@@ -974,6 +974,250 @@ if (peso &lt;= LIMITE_PESO)
 <h3>8. Para o trabalho (Rodada 3)</h3>
 <p>Os itens da Rodada 3 (entrega final) estão no resumo da Aula 12.</p>
 `
+},
+
+"gpms-a14": {
+  resumo: "Os 20 exercícios da revisão de GC e Manutenção, cada um com o enunciado e a resposta explicada: controle de versão, grafo de commits, merge, itens de configuração, solicitações de mudança, tipos de manutenção, Leis de Lehman e manutenibilidade.",
+  html: `
+<h3>Sobre esta página</h3>
+<p>A Aula 14 é de <b>exercícios e revisão</b>. O slide traz só os <b>enunciados</b>; aqui cada pergunta vem seguida da resposta, explicada com a matéria das aulas 8 a 13.</p>
+<div class="dica">As respostas são uma <b>resolução própria</b>, não o gabarito da professora. Nas questões abertas (e na do grafo do Git, em que a tag 2.0 já existe) deixei marcado o raciocínio, para você comparar com o que for dito em aula.</div>
+
+<h3>Parte 1 — Gerência de Configuração</h3>
+
+<h4>Questão 1</h4>
+<p><i>Qual é a diferença entre um sistema de controle de versão distribuído e um centralizado?</i></p>
+<table>
+<tr><th></th><th>Centralizado</th><th>Distribuído</th></tr>
+<tr><td><b>Repositórios</b></td><td>Um só, no servidor; cada pessoa tem uma cópia de trabalho</td><td>Um repositório completo por desenvolvedor, com área de trabalho acoplada</td></tr>
+<tr><td><b>Commit e update</b></td><td>Entre cliente e <b>servidor</b></td><td><b>Localmente</b>; troca por clone, pull e push</td></tr>
+<tr><td><b>Exemplos</b></td><td>CVS, Subversion</td><td>Git, Mercurial</td></tr>
+</table>
+<div class="ex">Centralizado é uma biblioteca com um único exemplar do livro. Distribuído é cada aluno ter uma cópia completa, anotar em casa e combinar as anotações depois.</div>
+
+<h4>Questão 2 — Verdadeiro ou falso</h4>
+<p><i>a) Um sistema de versionamento baseado em lock (bloqueio) é ideal para equipes grandes, onde múltiplos desenvolvedores trabalham simultaneamente nos mesmos arquivos.</i></p>
+<p><b>Falso.</b> O lock é o controle <b>pessimista</b>: só um desenvolvedor mexe no item por vez. Não há conflito, mas <b>não há paralelismo</b>, justamente o que uma equipe grande precisa. Para isso serve o controle <b>otimista</b> (Git).</p>
+<p><i>b) A auditoria de configuração de software inclui a verificação de que todos os itens de configuração estão corretamente identificados e que todas as mudanças foram corretamente implementadas e documentadas.</i></p>
+<p><b>Verdadeiro.</b> A auditoria existe para <b>assegurar que as alterações foram implementadas corretamente</b> e que a configuração está em conformidade e íntegra.</p>
+<p><i>c) O uso de tags no controle de versão permite marcar pontos específicos no histórico de commits, facilitando a identificação de versões específicas do software.</i></p>
+<p><b>Verdadeiro.</b> Tag é um rótulo sobre um commit (<code>git tag v1.0</code>), para achar uma versão sem decorar o hash.</p>
+<p><i>d) Como o git mantém histórico de qual branch estava ativo quando o commit é realizado, a estratégia de ramificação de solicitação de modificação permite identificar qual solicitação deu origem a cada funcionalidade do sistema.</i></p>
+<p><b>Falso.</b> O Git <b>não guarda</b> em que branch o commit foi feito. Um ramo é só um rótulo que aponta para um commit, e desaparece do histórico quando é apagado. A rastreabilidade por solicitação vem de <b>citar a issue na mensagem do commit e no pull request</b> (<code>fix [#12]: …</code>).</p>
+<p><i>e) O processo de integração contínua exige que o sistema seja compilado e testado continuamente com uma frequência bem definida. Por exemplo: uma vez ao dia.</i></p>
+<p><b>Falso.</b> A CI pede que se <b>integre com frequência</b> e que <b>cada integração</b> passe por build e testes automatizados. Não há frequência fixa exigida: “pelo menos uma vez por dia” é a recomendação da maioria dos autores, não uma regra.</p>
+
+<h4>Questão 3</h4>
+<p><i>Qual operação de controle de versão é a mais apropriada em cada situação?</i></p>
+<table>
+<tr><th>Situação</th><th>Operação</th></tr>
+<tr><td>a) Verificar se há mudanças no espaço de trabalho</td><td><code>git status</code> (e <code>git diff</code> para ver o conteúdo)</td></tr>
+<tr><td>b) Obter atualizações de um repositório remoto</td><td><code>git pull</code> (<code>git fetch</code> só baixa, sem integrar)</td></tr>
+<tr><td>c) Carregar versão específica para o espaço de trabalho</td><td><code>git checkout &lt;commit, ramo ou tag&gt;</code></td></tr>
+<tr><td>d) Criar um nome amigável para uma versão</td><td><code>git tag &lt;nome&gt;</code></td></tr>
+<tr><td>e) Verificar mudanças entre duas versões</td><td><code>git diff &lt;versão1&gt; &lt;versão2&gt;</code></td></tr>
+</table>
+
+<h4>Questão 4 — O grafo do Git</h4>
+<p><i>Dado o repositório abaixo, qual o resultado das operações 1 a 13?</i></p>
+<pre>A-B-C-E-G-H-I   main
+   \   /
+    D-F-J       1.x</pre>
+<p>Tags: <b>1.0</b> em B, <b>1.1</b> em D, <b>1.2</b> em F, <b>1.3</b> em J, <b>2.0</b> em G. O commit G é o <b>merge</b> de E e F. O ramo <b>main</b> aponta para I e o <b>1.x</b> para J.</p>
+<table>
+<tr><th>#</th><th>Operação</th><th>Resultado</th></tr>
+<tr><td>1</td><td><code>checkout 1.x</code></td><td>HEAD em <b>J</b>, no ramo 1.x</td></tr>
+<tr><td>2</td><td><code>commit</code></td><td>novo commit <b>K</b> (pai J); 1.x passa para K</td></tr>
+<tr><td>3</td><td><code>checkout main</code></td><td>HEAD em <b>I</b></td></tr>
+<tr><td>4</td><td><code>commit</code></td><td>novo commit <b>L</b> (pai I); main passa para L</td></tr>
+<tr><td>5</td><td><code>merge 1.x</code></td><td><b>merge commit M</b>, com dois pais (L e K); main passa para M. Não é <i>fast-forward</i>, pois os ramos divergiram</td></tr>
+<tr><td>6</td><td><code>tag 2.0</code></td><td>⚠️ <b>erro</b>: a tag 2.0 já existe (em G) e o Git não cria duas tags com o mesmo nome</td></tr>
+<tr><td>7</td><td><code>commit</code></td><td><b>N</b> (pai M); main passa para N</td></tr>
+<tr><td>8</td><td><code>branch feature</code></td><td>cria <b>feature</b> em N. O HEAD <b>continua em main</b></td></tr>
+<tr><td>9</td><td><code>commit</code></td><td><b>O</b> (pai N), na main; main passa para O e feature fica em N</td></tr>
+<tr><td>10</td><td><code>checkout 2.0</code></td><td>HEAD em <b>G</b> (tag), “destacado”</td></tr>
+<tr><td>11</td><td><code>branch 2.x</code></td><td>cria <b>2.x</b> em G</td></tr>
+<tr><td>12</td><td><code>checkout 2.x</code></td><td>HEAD passa a estar no ramo 2.x</td></tr>
+<tr><td>13</td><td><code>commit</code></td><td><b>P</b> (pai G); 2.x passa para P</td></tr>
+</table>
+<p><b>Estado final</b>: main → O · feature → N · 1.x → K · 2.x → P · HEAD em 2.x · tags nos mesmos lugares (1.0 B, 1.1 D, 1.2 F, 1.3 J, 2.0 G).</p>
+<div class="dica">Dois detalhes que costumam cair: <code>git branch</code> <b>não troca</b> de ramo (só cria); e o ramo 2.x nasce em G porque a tag 2.0 continuou em G. A tag só andaria até M se alguém forçasse (<code>-f</code>), o que não se faz com tag de versão publicada. Para marcar M, o certo seria uma tag nova, como 2.1.</div>
+
+<h4>Questão 5 — Revisão, variante ou cooperação</h4>
+<p><i>Z é um programa open-source na versão 1.0.5 e tem uma versão mais simples, Z lite, para dispositivos embarcados.</i></p>
+<table>
+<tr><th>Caso</th><th>Tipo</th><th>Por quê</th></tr>
+<tr><td>a) Pull request no repositório de Z</td><td><b>Cooperação</b></td><td>modificação feita a partir de uma versão base, para ser <b>combinada depois</b></td></tr>
+<tr><td>b) Lançamento da 1.1.0 de Z</td><td><b>Revisão</b></td><td>evolui a partir da 1.0.5, com intenção de substituí-la</td></tr>
+<tr><td>c) Lançamento da 1.1.1 de Z</td><td><b>Revisão</b></td><td>evolui a partir da 1.1.0</td></tr>
+<tr><td>d) Lançamento da 1.1.1 de Z lite</td><td><b>Variante</b></td><td>existe <b>ao mesmo tempo</b> que o Z completo, em paralelo, para outro contexto</td></tr>
+</table>
+
+<h4>Questão 6 — Alice e Bob</h4>
+<p>A versão base é:</p>
+<pre>def f(a):
+    return a + 1
+x = f(1)
+print(x)</pre>
+<p><b>Alice</b> acrescenta, no fim, <code>y = f(x)</code> e <code>print(y)</code>. <b>Bob</b> renomeia a função para <code>incrementa</code> e atualiza a chamada.</p>
+<p><i>a) Qual foi a intenção de cada alteração?</i></p>
+<ul>
+<li><b>Alice</b>: acrescentar um comportamento novo (calcular e imprimir um segundo valor): uma <b>evolução</b> (manutenção perfectiva).</li>
+<li><b>Bob</b>: renomear a função para um nome mais descritivo, <b>sem mudar o comportamento</b>: uma <b>refatoração</b> (<i>Rename Method</i>).</li>
+</ul>
+<p><i>b) Há conflito físico nas alterações?</i></p>
+<p><b>Não.</b> Bob mexeu na linha da definição e na da chamada; Alice só <b>acrescentou linhas no fim</b>. Nenhuma linha foi alterada pelos dois, então o Git funde sozinho. Mas existe um <b>conflito lógico</b>: a linha nova de Alice chama <code>f</code>, que Bob renomeou, e o programa passa a dar <code>NameError</code>.</p>
+<div class="ex">Dois colegas editam o mesmo trabalho: um troca o nome do capítulo 2 e o outro escreve, no fim, “como vimos no capítulo 2 (Introdução)”. O texto junta sem problema, mas a referência fica errada. Conflito físico é de texto; conflito lógico é de significado.</div>
+<p><i>c) Faça um merge correto das mudanças.</i></p>
+<pre>def incrementa(a):
+    return a + 1
+x = incrementa(1)
+print(x)
+y = incrementa(x)
+print(y)</pre>
+<p>Saída: <b>2</b> e depois <b>3</b>. A linha de Alice teve de ser <b>ajustada à mão</b> para usar o nome novo.</p>
+
+<h4>Questão 7 — O que versionar em um jogo</h4>
+<p>Regra: versione o que <b>as pessoas escrevem ou criam</b>; não o que é <b>gerado</b> e pode ser refeito.</p>
+<table>
+<tr><th>Artefato</th><th>Versionar?</th><th>Por quê</th></tr>
+<tr><td>classDiagram.uml</td><td><b>Sim</b></td><td>modelo de projeto; evolui junto com o código</td></tr>
+<tr><td>assets/model.stl</td><td><b>Sim</b></td><td>criado à mão, não é gerado. É binário (sem diff/merge); se for grande, usar Git LFS</td></tr>
+<tr><td>src/game.py</td><td><b>Sim</b></td><td>código-fonte</td></tr>
+<tr><td>src/game.pyc</td><td><b>Não</b></td><td>bytecode <b>gerado</b> a partir do .py; muda sempre e gera conflitos inúteis</td></tr>
+<tr><td>tests/test_game.py</td><td><b>Sim</b></td><td>os testes fazem parte do produto</td></tr>
+<tr><td>Pipfile</td><td><b>Sim</b></td><td>descreve as dependências</td></tr>
+<tr><td>Pipfile.lock</td><td><b>Sim</b></td><td>trava as versões exatas, para o build ser reprodutível</td></tr>
+<tr><td>game.exe</td><td><b>Não</b></td><td>produto de build; vai para <b>release</b>/artefatos da CI, não para o repositório de código</td></tr>
+</table>
+
+<h4>Questão 8 — O fluxo de uma solicitação de mudança</h4>
+<p><i>Ordene: (i) implementar a mudança, (ii) registrar a SM, (iii) decisão do CCB, (iv) analisar o impacto, (v) verificar/testar e atualizar a baseline, (vi) fechar a SM.</i></p>
+<p><b>(ii) → (iv) → (iii) → (i) → (v) → (vi)</b></p>
+<ol>
+<li><b>Registrar</b> a SM (a classificação de prioridade também entra aqui).</li>
+<li><b>Analisar o impacto</b>: esforço, cronograma, custo e proposta de implementação.</li>
+<li><b>Decisão do CCB</b> (Comitê de Controle da Configuração): implementar, rejeitar ou postergar.</li>
+<li><b>Implementar</b> a mudança, com testes de unidade.</li>
+<li><b>Verificar/testar</b> (testes de sistema) e <b>atualizar a baseline</b>.</li>
+<li><b>Fechar</b> a SM.</li>
+</ol>
+<div class="dica">A lógica: ninguém implementa antes de a mudança ser <b>aprovada</b>, e ninguém aprova sem saber o <b>impacto</b>.</div>
+
+<h4>Questão 9 — Exportar o relatório em PDF</h4>
+<p><i>Além da implementação, liste quatro itens de configuração que a análise de impacto deve considerar.</i></p>
+<ol>
+<li><b>Requisitos/especificação</b> do relatório (documento de requisitos ou histórias de usuário).</li>
+<li><b>Testes</b>: casos de teste e testes automatizados da exportação.</li>
+<li><b>Descritor de dependências</b> (ex.: Pipfile/lock), pois provavelmente entra uma biblioteca de PDF, com versão e licença.</li>
+<li><b>Documentação do usuário</b>: manual ou ajuda sobre como exportar.</li>
+</ol>
+<p>Também poderiam entrar scripts de build e de implantação, diagramas de projeto e a configuração do ambiente. A análise ainda estima o impacto em <b>esforço, cronograma e custo</b>.</p>
+
+<h4>Questão 10</h4>
+<p><i>Qual a diferença entre uma solicitação de mudança e um relato de defeito? Dê um exemplo de cada.</i></p>
+<table>
+<tr><th></th><th>Solicitação de mudança</th><th>Relato de defeito</th></tr>
+<tr><td><b>O que é</b></td><td>Pedido para <b>alterar</b> o sistema: funcionalidade nova, melhoria, adaptação</td><td>Aviso de que o sistema <b>não faz o que já deveria</b> fazer</td></tr>
+<tr><td><b>Exemplo</b></td><td>“Exportar o relatório mensal em PDF”</td><td>“O app fecha com erro ao enviar o formulário vazio”</td></tr>
+</table>
+<p>Corrigir o defeito é tratamento do <b>sintoma</b>; é preciso achar a <b>causa raiz</b>. No GitHub, os dois viram <i>issues</i>, diferenciadas por rótulos (por exemplo, <i>bug</i> e <i>enhancement</i>).</p>
+
+<h3>Parte 2 — Manutenção de Software</h3>
+
+<h4>Questão 1 — O produto popular cheio de bugs</h4>
+<p><i>Uma empresa lançou um produto que ganhou popularidade, mas logo os clientes relataram bugs e problemas de desempenho. A empresa decidiu focar em corrigi-los o mais rápido possível.</i></p>
+<p><i>a) Que tipo de manutenção está sendo realizada?</i> <b>Corretiva</b>: é reativa e corrige os problemas reportados. Se fossem só remendos temporários para manter o sistema no ar, seria <b>emergencial</b>.</p>
+<p><i>b) Que outros tipos poderiam ser necessários no futuro? Justifique.</i></p>
+<ul>
+<li><b>Perfectiva</b>: produto popular recebe pedidos de funcionalidades e melhorias; melhorar o desempenho de forma planejada também é perfectiva.</li>
+<li><b>Adaptativa</b>: o ambiente muda (sistemas operacionais, navegadores, bibliotecas, leis) e o software precisa continuar usável.</li>
+<li><b>Preventiva</b>: refatorar, atualizar dependências e corrigir problemas latentes antes de virarem falhas, reduzindo a dívida técnica criada pela pressa.</li>
+<li><b>Emergencial</b>: quando algo parar em produção de repente.</li>
+</ul>
+<p>A justificativa vem das <b>Leis de Lehman</b>: o software precisa de mudança e crescimento contínuos, e sem cuidado a complexidade cresce e a qualidade declina. E quanto mais sucesso, mais usos e mais bugs.</p>
+
+<h4>Questão 2 — Verdadeiro ou falso</h4>
+<p><i>a) A manutenção adaptativa é realizada exclusivamente para corrigir erros e falhas descobertos após a implementação do software.</i></p>
+<p><b>Falso.</b> Corrigir erros é a <b>corretiva</b>. A adaptativa mantém o software usável após <b>mudanças no ambiente</b> (ex.: o CNPJ alfanumérico).</p>
+<p><i>b) A manutenção perfectiva é realizada para adicionar novas funcionalidades ou melhorar as funcionalidades existentes no software.</i></p>
+<p><b>Verdadeiro.</b> Perfectiva (evolutiva) provê melhorias ao usuário e melhora atributos de qualidade.</p>
+<p><i>c) A manutenção preventiva geralmente é menos custosa do que a corretiva, pois evita problemas antes que se tornem sérios.</i></p>
+<p><b>Verdadeiro</b> (“geralmente”). A preventiva é pró-ativa e trata o problema ainda pequeno e planejado; a corretiva chega com o problema em produção. O caso Knight (código morto que custou US$ 440 milhões) mostra o preço de não prevenir.</p>
+<p><i>d) A manutenção de software não inclui atividades relacionadas à documentação, já que estas são realizadas apenas durante o desenvolvimento inicial.</i></p>
+<p><b>Falso.</b> Manter o software inclui manter a documentação: atualizá-la a cada mudança, reestruturá-la e gerá-la por engenharia reversa na reengenharia. Documentação desatualizada é a marca dos sistemas legados.</p>
+
+<h4>Questão 3</h4>
+<p><i>Os testes estão falhando e o arquivo src/game.pyc foi incluído na configuração. Qual(is) auditoria(s) encontra(m) esses problemas? Por quê?</i></p>
+<ul>
+<li><b>Testes falhando</b> → a <b>auditoria automatizada (CI/CD)</b>: o build com testes roda a cada integração e acusa a falha.</li>
+<li><b>.pyc na configuração</b> → a <b>auditoria de conformidade e integridade</b> da configuração, que confere se os itens estão corretamente identificados e se a configuração contém só o que deveria. O <code>.pyc</code> é um arquivo <b>gerado</b>, não deveria ser item de configuração.</li>
+</ul>
+
+<h4>Questão 4 — Qual o tipo de manutenção</h4>
+<table>
+<tr><th>Situação</th><th>Tipo</th><th>Por quê</th></tr>
+<tr><td>a) Adição de funcionalidade ao sistema</td><td><b>Perfectiva</b></td><td>melhoria para o usuário</td></tr>
+<tr><td>b) Ajuste para funcionar com versão beta de biblioteca que será lançada no futuro</td><td><b>Adaptativa</b></td><td>acompanha mudança no ambiente, mesmo antecipada</td></tr>
+<tr><td>c) Reiniciar servidor que parou repentinamente</td><td><b>Emergencial</b></td><td>não programada; mantém o sistema no ar temporariamente</td></tr>
+<tr><td>d) Corrigir bug para a próxima atualização planejada</td><td><b>Corretiva</b></td><td>reativa, corrige problema reportado (e é programada)</td></tr>
+<tr><td>e) Corrigir <i>memory leak</i> com potencial de causar bugs</td><td><b>Preventiva</b></td><td>problema latente, tratado antes de virar falha</td></tr>
+</table>
+
+<h4>Questão 5</h4>
+<ul>
+<li><b>a) Melhorar o desempenho:</b> <b>perfectiva</b> (melhora um atributo de qualidade).</li>
+<li><b>b) Eliminar uma falha de segurança:</b> <b>corretiva</b>, pois corrige uma falha existente (como o patch do Struts no caso Equifax). Se for achada e tratada antes de qualquer problema, pode ser <b>preventiva</b>.</li>
+<li><b>c) Desempenho e segurança são exemplos de:</b> <b>requisitos não funcionais</b> (atributos de qualidade). Dizem <i>como</i> o sistema deve se comportar, não <i>o que</i> ele faz.</li>
+</ul>
+
+<h4>Questão 6</h4>
+<p><i>Os custos de manutenção podem alcançar 80% dos custos totais de um projeto de software durante o seu ciclo de vida. Por que esse valor é tão alto?</i></p>
+<ul>
+<li>O software <b>vive anos</b> depois da entrega; a maior parte da vida é operação e manutenção.</li>
+<li>O mundo <b>muda</b> (leis, plataformas, bibliotecas, requisitos): <b>mudança contínua</b> e <b>crescimento contínuo</b>, nas Leis de Lehman.</li>
+<li>A <b>complexidade cresce</b> e a <b>qualidade declina</b> se ninguém cuida: dívida técnica.</li>
+<li><b>Entender código custa caro</b>: ler &gt; escrever, documentação ruim, equipe que muda.</li>
+<li>Só cerca de 21% do esforço é correção de erros; o resto é adaptar, evoluir e prevenir.</li>
+<li>Sucesso gera mais usuários, mais usos e mais pedidos.</li>
+</ul>
+<div class="dica">Números da aula: manutenção é 90% do custo total (Erlikh) ou 60% do esforço (Pressman); 42% do tempo dos desenvolvedores vai para dívida técnica e código ruim.</div>
+
+<h4>Questão 7</h4>
+<p><i>Existem sistemas importantes que sofrem pouquíssima manutenção (e que continuam sendo usados)?</i></p>
+<p><b>Sim, mas são exceções</b>, e dependem de condições: <b>requisitos estáveis</b> e <b>ambiente congelado ou isolado</b> (ex.: firmware de equipamento, controladores industriais, software de bordo), ou programas pequenos, maduros e bem definidos (utilitários básicos de linha de comando).</p>
+<p>Mesmo assim, se o ambiente mudar (hardware, sistema operacional, segurança), a falta de manutenção vira risco: pelas Leis de Lehman, o software que não se adapta fica menos satisfatório e perde qualidade. E sistemas legados importantes, como os de COBOL, continuam em uso <i>porque</i> são mantidos.</p>
+
+<h4>Questão 8</h4>
+<p><i>Diferencie engenharia reversa, refatoração e reengenharia.</i></p>
+<table>
+<tr><th>Conceito</th><th>O que faz</th><th>Muda o sistema?</th></tr>
+<tr><td><b>Engenharia reversa</b></td><td>Extrai informação do código existente para <b>gerar documentação e modelos</b> (casos de uso, classes, sequência…)</td><td>Não; serve para <b>entender</b></td></tr>
+<tr><td><b>Refatoração</b></td><td>Muda a <b>estrutura interna</b> para facilitar o entendimento e a modificação, <b>sem alterar o comportamento externo</b></td><td>Só por dentro</td></tr>
+<tr><td><b>Reengenharia</b></td><td><b>Reconstrói ou transforma</b> um sistema existente: compreensão (engenharia reversa) + reestruturação + engenharia avante; pode mudar a arquitetura, a plataforma e acrescentar funcionalidades</td><td>Sim, de forma ampla</td></tr>
+</table>
+<div class="ex">Casa antiga. <b>Engenharia reversa</b>: desenhar a planta do que já existe. <b>Refatoração</b>: reorganizar os móveis, sem derrubar paredes. <b>Reengenharia</b>: uma reforma grande, com troca de instalações e, se preciso, de planta.</div>
+
+<h4>Questão 9 — Leis de Lehman</h4>
+<table>
+<tr><th>Enunciado</th><th>Lei</th></tr>
+<tr><td>a) Sem esforço para reduzi-la, a complexidade aumenta com as mudanças</td><td><b>Complexidade crescente</b> (2ª)</td></tr>
+<tr><td>b) O sistema precisa se adaptar continuamente ou se torna cada vez menos útil</td><td><b>Mudança contínua</b> (1ª)</td></tr>
+<tr><td>c) Funcionalidades precisam crescer para manter a satisfação dos usuários</td><td><b>Crescimento contínuo</b> (6ª)</td></tr>
+<tr><td>d) A qualidade parece diminuir, a menos que o sistema seja adaptado ao ambiente</td><td><b>Qualidade em declínio</b> (7ª)</td></tr>
+</table>
+
+<h4>Questão 10</h4>
+<p><i>Cite quatro fatores que afetam a manutenibilidade de um sistema e, para cada um, uma ação que a melhora.</i></p>
+<table>
+<tr><th>Fator</th><th>Ação que melhora</th></tr>
+<tr><td><b>Modularidade</b></td><td>Dividir em módulos com <b>interfaces bem definidas</b> e baixo acoplamento</td></tr>
+<tr><td><b>Analisabilidade</b> (é fácil de entender?)</td><td><b>Código limpo</b>: nomes claros, funções pequenas, sem números mágicos; documentação atualizada</td></tr>
+<tr><td><b>Modificabilidade</b></td><td>Baixo acoplamento, alta coesão e <b>abstrações/interfaces</b> (princípios SOLID)</td></tr>
+<tr><td><b>Testabilidade</b></td><td><b>Testes automatizados</b>, que dão segurança para mudar e refatorar</td></tr>
+</table>
+<p>Vale citar também a <b>reusabilidade</b>: extrair funções e componentes reutilizáveis em vez de duplicar código.</p>
+`
 }
 
 };
