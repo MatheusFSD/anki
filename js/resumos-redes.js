@@ -1,240 +1,331 @@
 /* Redes — resumos das aulas, em linguagem simples (aba "Resumos").
    A chave é o id da aula em data-redes.js. Mesmo formato de resumos-gpms.js.
-   Escritos a partir dos cartões de cada aula (que vieram dos slides). */
+   Escritos a partir do texto dos slides de cada aula. */
 const RESUMOS_REDES = {
 
 "redes-a123": {
-  resumo: "O que é um protocolo, por que a rede é dividida em camadas, os modelos OSI e TCP/IP, o encapsulamento, os tipos de rede (PAN, LAN, MAN, WAN), as topologias, os componentes da Internet e como ela nasceu.",
+  resumo: "Protocolos e camadas, os modelos OSI e TCP/IP, encapsulamento, tipos de rede (PAN, LAN, MAN, WAN), topologias, a visão de componentes e de serviços da Internet e como ela nasceu.",
   html: `
 <h3>1. Protocolo: a “língua” combinada</h3>
-<p>Para duas entidades se comunicarem e se entenderem, precisam de duas coisas: um <b>canal</b> entre elas e uma <b>linguagem comum</b>. Essa linguagem é o <b>protocolo de comunicação</b>: um conjunto de regras e procedimentos que define:</p>
+<p>Para duas pessoas se comunicarem, basta um <b>canal</b> entre elas. Para <b>se entenderem</b>, precisam também de uma <b>linguagem comum</b>. Em redes, essa linguagem é o <b>protocolo de comunicação</b>: o conjunto de regras e procedimentos que define a comunicação entre duas ou mais entidades. Ele define:</p>
 <ul>
 <li>o <b>formato e a ordem</b> das mensagens trocadas;</li>
-<li>as <b>ações</b> tomadas ao enviar ou receber uma mensagem;</li>
+<li>as <b>ações</b> tomadas ao receber e/ou transmitir uma mensagem;</li>
 <li>as ações tomadas em <b>outros eventos</b>.</li>
 </ul>
-<div class="ex">Uma ligação telefônica já segue um protocolo: você disca, o outro diz “alô”, vocês se identificam, conversam e se despedem. Se ninguém atende, também há regra: tentar de novo depois. Quanto mais exigências (confiabilidade, qualidade, segurança, falar em grupo), mais complexo o sistema fica.</div>
+<div class="ex">Pergunta humana: “Que horas são?” → resposta “9:30h”. Pergunta de rede: o cliente manda uma requisição TCP, o servidor responde, o cliente pede com <i>Get http://…</i> e recebe o arquivo. Nos dois casos há uma ordem combinada: pedir, responder, entregar.</div>
+<p>Quando a comunicação precisa ser mais que “apenas” funcionar, as exigências crescem: <b>confiável e sem falhas</b> (“Falei oi! Você falou algo?”), <b>com qualidade</b>, <b>segura</b> (ninguém além do destino lê a mensagem), <b>em grupo</b>… Quanto mais requisitos, <b>mais complexo</b> fica o sistema.</p>
 
-<h3>2. Por que dividir em camadas</h3>
-<p>Para <b>reduzir a complexidade</b>. Com camadas, as partes e suas relações ficam explícitas, a manutenção é mais fácil e <b>mudar a implementação de uma camada é transparente para o resto</b>. Cada camada presta um serviço à de cima e “esconde” como o faz.</p>
-<div class="ex">Você entrega uma encomenda no balcão dos Correios. Se eles trocarem o caminhão pelo trem, nada muda para você: só importa o serviço “a encomenda chega”.</div>
-<p>O número, o nome e a função das camadas <b>podem variar</b> de uma rede para outra.</p>
+<h3>2. Arquitetura em camadas</h3>
+<p>Para <b>reduzir a complexidade</b> do projeto, a rede é dividida em camadas. Cada camada <b>presta um serviço às camadas de cima</b> e “esconde” delas como o serviço é implementado. O resultado é uma <b>pilha de camadas</b>, e o número, o nome e a função das camadas <b>podem ser diferentes em cada rede</b>.</p>
+<p>Por que isso ajuda?</p>
+<ul>
+<li>A <b>estrutura explícita</b> mostra as partes do sistema e como se relacionam;</li>
+<li>a <b>modularização</b> facilita a manutenção e a atualização;</li>
+<li>mudar a implementação do serviço de uma camada é <b>transparente</b> para o resto do sistema.</li>
+</ul>
+<div class="ex">Você manda uma encomenda pelos Correios. Se eles trocarem o caminhão por um trem, nada muda para você: o serviço “a encomenda chega” é o mesmo.</div>
 <table>
 <tr><th>Termo</th><th>O que é</th></tr>
-<tr><td><b>Protocolo</b></td><td>regras usadas por entidades <b>pares</b> (a mesma camada N em sistemas diferentes) para conversar</td></tr>
-<tr><td><b>Interface</b></td><td>primitivas e serviços que uma camada oferece à <b>camada de cima, no mesmo sistema</b></td></tr>
+<tr><td><b>Entidades pares</b></td><td>as camadas de mesmo nível (camada N) em sistemas diferentes; elas se comunicam por um <b>protocolo</b></td></tr>
+<tr><td><b>Protocolo da camada N</b></td><td>as regras que as entidades pares da camada N usam entre si</td></tr>
+<tr><td><b>Interface</b></td><td>entre duas camadas vizinhas <b>do mesmo sistema</b>: define as primitivas e os serviços que a camada de baixo oferece à de cima</td></tr>
 <tr><td><b>Arquitetura de rede</b></td><td>o conjunto de camadas e protocolos</td></tr>
 <tr><td><b>Pilha de protocolos</b></td><td>a lista de protocolos usados por um sistema</td></tr>
 </table>
+<div class="dica">Protocolo é “conversa para o lado” (mesma camada, máquinas diferentes). Interface é “conversa para cima/baixo” (camadas vizinhas, mesma máquina).</div>
 
-<h3>3. Modelo OSI</h3>
-<p>Proposto pela <b>ISO</b> na década de 70 (<i>Open Systems Interconnection</i>), tem <b>7 camadas</b>: 1 Física, 2 Enlace, 3 Rede, 4 Transporte, 5 Sessão, 6 Apresentação, 7 Aplicação.</p>
+<h3>3. Comunicação multicamadas (a analogia do fax)</h3>
+<p>Um chefe em um local A quer mandar a mensagem “Welcome” para um local B. Um <b>tradutor</b> escreve a versão no idioma combinado e anota “L: english”. Uma <b>secretária</b> junta o número do <b>fax</b> do destino e envia. No local B, a secretária lê o fax, o tradutor lê o idioma e entrega a mensagem pronta.</p>
+<p>Cada camada <b>acrescenta uma informação de controle</b> (um cabeçalho) que só a camada correspondente do outro lado vai ler. É a ideia do encapsulamento, logo adiante.</p>
+
+<h3>4. Os dois modelos</h3>
+<h4>OSI (<i>Open Systems Interconnection</i>)</h4>
+<p>Proposto pela <b>ISO</b> na década de 70. Tem <b>sete camadas</b>: 1 Física, 2 Enlace, 3 Rede, 4 Transporte, 5 Sessão, 6 Apresentação, 7 Aplicação.</p>
 <ul>
-<li><b>Pró</b>: bastante geral e continua válido até hoje.</li>
-<li><b>Contra</b>: os protocolos associados ao OSI são raramente usados.</li>
-<li><b>Críticas</b>: complexidade (cada camada precisa cumprir sua função antes de encaminhar), rigidez (camadas diferentes não deveriam compartilhar informação) e serviços repetidos em várias camadas (ex.: correção de erros).</li>
+<li><b>Prós</b>: é bastante geral e continua válido até hoje.</li>
+<li><b>Contras</b>: os protocolos associados a ele são raramente usados.</li>
+<li><b>Críticas</b>: <b>complexidade</b> (cada camada deve cumprir sua função antes de passar os dados à seguinte); <b>rigidez</b> (camadas diferentes não devem compartilhar informações); <b>serviços repetidos</b> em camadas diferentes (por exemplo, correção de erros).</li>
 </ul>
-
-<h3>4. Modelo TCP/IP</h3>
-<p>Surgiu na década de 80, com <b>cinco (ou quatro) camadas</b>. A grande diferença: seus <b>protocolos são amplamente usados</b>, embora as camadas sejam mais “restritas” que as do OSI.</p>
-<div class="dica">O OSI é só um <b>modelo de referência</b>; o TCP/IP <b>define os protocolos</b> de cada camada.</div>
+<h4>TCP/IP</h4>
+<p>Surgiu na década de 80, com <b>cinco (ou quatro) camadas</b>: Física, Enlace, Rede, Transporte e Aplicação. Seus protocolos são <b>amplamente usados</b>; o contra é que as camadas são mais “restritas” que as do OSI.</p>
+<div class="dica">OSI é só um <b>modelo de referência</b>. O TCP/IP <b>define os protocolos</b> de cada camada.</div>
 <table>
-<tr><th>Camada</th><th>Função</th><th>PDU</th><th>Exemplos</th></tr>
-<tr><td><b>Aplicação</b></td><td>suporte a aplicações de rede</td><td>mensagem</td><td>HTTP, SMTP, FTP</td></tr>
-<tr><td><b>Transporte</b></td><td>comunicação <b>fim-a-fim</b> entre sistemas finais</td><td>segmento</td><td>TCP, UDP</td></tr>
+<tr><th>Camada</th><th>Função</th><th>Unidade de dados</th><th>Exemplos</th></tr>
+<tr><td><b>Aplicação</b></td><td>suporte às aplicações de rede</td><td>mensagem</td><td>HTTP, SMTP, FTP</td></tr>
+<tr><td><b>Transporte</b></td><td>comunicação <b>fim a fim</b>: transferência de dados entre os sistemas finais</td><td>segmento</td><td>TCP, UDP</td></tr>
 <tr><td><b>Rede</b></td><td>encaminhamento e roteamento</td><td>datagrama</td><td>IP</td></tr>
-<tr><td><b>Enlace</b></td><td>comunicação <b>salto-a-salto</b> entre vizinhos</td><td>quadro</td><td>Ethernet, PPP, WiFi</td></tr>
-<tr><td><b>Física</b></td><td>transmitir os bits “no fio” (modulação e codificação)</td><td>bits</td><td>—</td></tr>
+<tr><td><b>Enlace</b></td><td>comunicação <b>salto a salto</b>: transferência entre elementos de rede vizinhos</td><td>quadro</td><td>Ethernet, PPP, WiFi</td></tr>
+<tr><td><b>Física</b></td><td>transmissão dos bits “no fio”; modulação e codificação</td><td>bits</td><td>—</td></tr>
 </table>
-<p>PDU é a unidade de dados daquela camada.</p>
 
 <h3>5. Encapsulamento</h3>
-<p>Cada camada <b>acrescenta o seu cabeçalho</b> à unidade que veio de cima. No destino, cada camada tira (desencapsula) o cabeçalho correspondente.</p>
-<pre>mensagem    M
-segmento    Ht M
-datagrama   Hr Ht M
-quadro      He Hr Ht M</pre>
-<p>(Ht = cabeçalho de transporte, Hr = de rede, He = de enlace.) Os <b>roteadores</b> processam até a camada de <b>rede</b>; os <b>comutadores</b>, até a de <b>enlace</b>.</p>
-<div class="ex">Uma carta dentro de um envelope, dentro de um malote, dentro de um caminhão: cada etapa do caminho só abre o nível que lhe interessa.</div>
+<p>Na origem, a mensagem da aplicação desce a pilha e <b>cada camada coloca seu cabeçalho</b>:</p>
+<ol>
+<li>Transporte: junta o cabeçalho H<sub>T</sub> à mensagem M e forma o <b>segmento</b>.</li>
+<li>Rede: junta H<sub>R</sub> e forma o <b>datagrama</b>.</li>
+<li>Enlace: junta H<sub>E</sub> (e um final T, <i>trailer</i>) e forma o <b>quadro</b>.</li>
+<li>Física: manda os bits.</li>
+</ol>
+<p>No caminho, os equipamentos intermediários só abrem até onde precisam: o <b>comutador (switch)</b> trabalha até a camada de <b>enlace</b>; o <b>roteador</b> vai até a camada de <b>rede</b>. No destino, o caminho é inverso: cada camada tira o seu cabeçalho e entrega o restante para cima, até a aplicação receber a mensagem M.</p>
+<div class="ex">É como enviar uma carta: você escreve a mensagem (M), coloca num envelope com o endereço (H<sub>R</sub>), e a transportadora coloca esse envelope numa caixa com a etiqueta do próximo trecho (H<sub>E</sub>). Quem recebe vai abrindo, da caixa para o envelope.</div>
 
-<h3>6. Tipos de rede</h3>
-<p>Uma <b>rede de computadores</b> é um conjunto de computadores autônomos interconectados; a Internet é uma <b>rede de redes</b>. Por extensão geográfica:</p>
-<table>
-<tr><th>Tipo</th><th>Alcance</th><th>Exemplo</th></tr>
-<tr><td><b>PAN</b></td><td>muito pequeno, para uma só pessoa</td><td>Bluetooth</td></tr>
-<tr><td><b>LAN</b></td><td>um prédio ou conjunto de prédios</td><td>Ethernet</td></tr>
-<tr><td><b>MAN</b></td><td>uma cidade</td><td>rede baseada na TV a cabo</td></tr>
-<tr><td><b>WAN</b></td><td>um país ou continente</td><td>ATM</td></tr>
-</table>
-<table>
-<tr><th>LAN</th><th>WAN</th></tr>
-<tr><td>pequenas distâncias; em geral de uma organização</td><td>distâncias muito grandes</td></tr>
-<tr><td>taxas da ordem de Mbps</td><td>em geral, taxas menores que as das LANs</td></tr>
-<tr><td>pequenos atrasos de propagação</td><td>atrasos de propagação maiores</td></tr>
-<tr><td>—</td><td>comutadores de pacotes interligados por enlaces dedicados</td></tr>
-</table>
+<h3>6. Redes de computadores e seus usos</h3>
+<p>Definições vistas: uma rede é um <b>conjunto de computadores autônomos interconectados por uma única tecnologia</b>; também é um <b>sistema de comunicação</b> que interconecta computadores, terminais e periféricos. A <b>Internet é uma rede de redes</b>.</p>
+<ul>
+<li><b>Aplicações comerciais</b>: compartilhar recursos físicos e informações, comunicação entre usuários, comércio eletrônico.</li>
+<li><b>Aplicações domésticas</b>: as mesmas, mais entretenimento.</li>
+<li><b>Usuários móveis</b>: escritório portátil e aplicações militares.</li>
+</ul>
 
-<h3>7. Topologias</h3>
-<p>As mais comuns são <b>malha</b> (completa ou irregular), <b>estrela</b>, <b>anel</b>, <b>barramento</b> e <b>híbridas</b> (anel-estrela, barramento-estrela, estrela-anel, árvore de barramentos). Cada uma pesa diferente em custo, confiabilidade e alcance.</p>
+<h3>7. Classificação por extensão geográfica</h3>
+<table>
+<tr><th>Tipo</th><th>Alcance</th><th>Características</th><th>Exemplo</th></tr>
+<tr><td><b>PAN</b> (pessoal)</td><td>distâncias muito pequenas, uma única pessoa</td><td>—</td><td>Bluetooth</td></tr>
+<tr><td><b>LAN</b> (local)</td><td>um prédio ou conjunto de prédios</td><td>geralmente de uma mesma organização; taxa da ordem de Mbps; atrasos de propagação pequenos</td><td>Ethernet</td></tr>
+<tr><td><b>MAN</b> (metropolitana)</td><td>uma cidade</td><td>—</td><td>rede baseada em TV a cabo</td></tr>
+<tr><td><b>WAN</b> (longa distância)</td><td>um país ou continente</td><td>comutadores de pacotes ligados por enlaces dedicados; taxas em geral <b>menores</b> e atrasos <b>maiores</b> que nas LANs</td><td>ATM</td></tr>
+</table>
+<p>Nas WANs ainda se distinguem as redes <b>domiciliares e corporativas</b>, as <b>redes de acesso</b> e as <b>redes backbone</b>.</p>
+
+<h3>8. Topologias</h3>
+<p>Topologia é a <b>estrutura física de interligação</b> dos equipamentos. Cada uma tem implicações diferentes de <b>custo, confiabilidade e alcance</b>. As mais comuns: malha, estrela, anel, barramento e híbridas.</p>
 <table>
 <tr><th>Topologia</th><th>Como é</th><th>Vantagens</th><th>Desvantagens</th></tr>
-<tr><td><b>Malha completa</b></td><td>cada estação ligada a todas as outras</td><td>sem meio compartilhado; sem decisão de roteamento</td><td>enorme quantidade de ligações: custo</td></tr>
-<tr><td><b>Malha irregular</b></td><td>a mais geral: cada estação liga-se a um número variável de outras</td><td>dá para montar conforme o tráfego e fugir de congestionamento</td><td>exige decisão de roteamento</td></tr>
-<tr><td><b>Estrela</b></td><td>todas ligadas a um nó central, que decide o roteamento</td><td>boa se o fluxo é centralizado</td><td>depende do nó central (confiabilidade)</td></tr>
-<tr><td><b>Anel</b></td><td>mensagens circulam nó a nó; cada um copia o que é seu</td><td>sem roteamento; sem armazenamento intermediário (bom atraso e vazão)</td><td>precisa controlar o acesso ao meio; confiabilidade depende de cada nó (são repetidores)</td></tr>
-<tr><td><b>Barramento</b></td><td>todas “escutam” o mesmo meio</td><td>sem roteamento; sem armazenamento intermediário</td><td>precisa controlar o acesso ao meio compartilhado</td></tr>
+<tr><td><b>Malha completa</b></td><td>cada estação ligada a todas as outras</td><td>sem compartilhamento do meio; sem decisão de roteamento</td><td>muitas ligações (custo)</td></tr>
+<tr><td><b>Malha irregular</b></td><td>a mais geral: cada estação liga-se a um número variável de outras</td><td>interconexão ajustável ao tráfego; escolhe por onde enviar, evitando congestionamento</td><td>exige decisão de roteamento</td></tr>
+<tr><td><b>Estrela</b></td><td>todas as estações ligadas a um nó central, que decide o roteamento</td><td>boa quando o fluxo é centralizado</td><td>confiabilidade depende do nó central; ruim se o fluxo não é centralizado</td></tr>
+<tr><td><b>Anel</b></td><td>mensagens circulam de nó em nó até o destino; cada nó reconhece o próprio endereço e copia o que é seu</td><td>boa com fluxo não centralizado; sem roteamento; sem armazenamento intermediário, então melhor atraso e vazão</td><td>precisa de mecanismo de acesso ao meio compartilhado; depende da confiabilidade de cada nó (que funciona como repetidor)</td></tr>
+<tr><td><b>Barramento</b></td><td>mensagens transferidas sem participação dos nós intermediários; todas as estações “escutam” e reconhecem o próprio endereço</td><td>sem roteamento; sem armazenamento intermediário</td><td>precisa de mecanismo de acesso ao meio compartilhado</td></tr>
 </table>
-<div class="dica">A <b>malha</b> aparece em <b>WANs</b> e não em LANs: em rede local o meio físico é barato, e decidir por onde mandar cada mensagem e guardá-la em cada nó intermediário aumentaria o custo e o atraso. Estrela e barramento são usadas principalmente em <b>LANs</b>.</div>
-
-<h3>8. Componentes da Internet</h3>
 <ul>
-<li><b>Estações (hosts)</b> ou sistemas finais: rodam as aplicações.</li>
-<li><b>Enlaces</b>: fibra, cobre, rádio, satélite; medidos pela taxa de transmissão (largura de banda).</li>
-<li><b>Roteadores</b> (comutadores de pacotes): encaminham os pacotes.</li>
-<li><b>Provedores (ISPs)</b>: local, regional e backbone.</li>
+<li>A <b>malha</b> é usada principalmente em redes de <b>longa distância</b>. Em LANs quase não se usa: o custo do meio físico é pequeno, e a decisão de roteamento e o armazenamento a cada nó aumentam o custo e o atraso e diminuem a vazão.</li>
+<li><b>Estrela, anel e barramento</b> são usadas principalmente em <b>redes locais</b>.</li>
+<li>Existem ainda as <b>híbridas</b>: anel-estrela, barramento-estrela, estrela-anel, árvore de barramentos.</li>
 </ul>
-<p>A <b>borda</b> é formada pelas aplicações, sistemas finais e redes de acesso; o <b>núcleo</b> são os roteadores, a “rede de redes”. O princípio da Internet: <b>complexidade na borda, núcleo simples</b>.</p>
-<p>A Internet oferece às aplicações dois serviços: transferência <b>confiável</b> de dados e transferência de <b>melhor esforço</b> (não confiável). Qualquer aplicação distribuída (Web, e-mail, jogos, mensagens, VoIP, compartilhamento de arquivos) só precisa seguir as regras.</p>
 
-<h3>9. Como a Internet começou</h3>
-<table>
-<tr><th>Quando</th><th>O que aconteceu</th></tr>
-<tr><td>Out/1957</td><td>Os soviéticos lançam o Sputnik I, primeiro satélite artificial</td></tr>
-<tr><td>1958</td><td>Em reação, Eisenhower cria a <b>ARPA</b> (defesa antimísseis e detecção de testes nucleares)</td></tr>
-<tr><td>1964</td><td>Licklider, Kleinrock, Baran e Roberts propõem interconectar computadores para acessar dados e programas de qualquer lugar, com <b>topologia distribuída</b> (uma bomba não anularia a comunicação) e <b>comutação de pacotes</b></td></tr>
-</table>
-<p>Na <b>comutação de pacotes</b>, a mensagem é dividida em pacotes, encaminhada e remontada no destino, o que permite <b>caminhos redundantes</b>.</p>
+<h3>9. O que é a Internet</h3>
+<p>Nos anos 2000 já passava de <b>100 mil roteadores</b>. É uma rede que interconecta <b>tudo</b>: computadores pessoais, mainframes, portáteis, celulares, sensores e até eletrodomésticos (a geladeira conectada).</p>
+<h4>Visão dos componentes</h4>
+<ul>
+<li><b>Estações (hosts) ou sistemas finais</b>: rodam as aplicações de rede.</li>
+<li><b>Enlaces (links)</b>: fibra, cobre, rádio, satélite; medidos pela <b>taxa de transmissão</b> (largura de banda, <i>bandwidth</i>).</li>
+<li><b>Roteadores (comutadores de pacotes)</b>: encaminham pacotes pela rede.</li>
+<li><b>Provedores de serviço (ISPs)</b>: local, regional etc.</li>
+</ul>
+<h4>Visão dos serviços</h4>
+<p>A Internet é uma <b>infraestrutura de comunicação que provê serviços a aplicações distribuídas</b> (Web, e-mail, jogos, mensagens instantâneas, VoIP, compartilhamento de arquivos). A aplicação só precisa seguir um conjunto de regras. Os serviços oferecidos são dois: transferência <b>confiável</b> de dados da origem ao destino e transferência “<b>melhor esforço</b>” (não confiável).</p>
+<h4>Estrutura</h4>
+<ul>
+<li><b>Borda</b>: aplicações, sistemas finais e redes de acesso.</li>
+<li><b>Núcleo</b>: roteadores e a rede de redes.</li>
+</ul>
+
+<h3>10. Como tudo começou</h3>
+<ol>
+<li><b>Outubro de 1957</b>: os soviéticos lançam o <b>Sputnik I</b>, primeiro satélite artificial da Terra.</li>
+<li><b>1958</b>: o presidente Eisenhower cria a <b>ARPA</b> (<i>Advanced Research Projects Agency</i>), voltada a um sistema de defesa antimísseis e à detecção de testes de bombas nucleares.</li>
+<li><b>1964</b>: Licklider, Kleinrock, Baran e Roberts propõem interconectar computadores para “acessar dados e programas de qualquer lugar e de maneira fácil e rápida”, com <b>topologia distribuída</b> (uma bomba não anularia a comunicação) e <b>comutação de pacotes</b>.</li>
+</ol>
+<div class="ex">Comutação de pacotes: a mensagem é <b>dividida em pacotes</b>, cada pacote é <b>encaminhado</b> (podendo seguir caminhos redundantes diferentes) e a mensagem é <b>remontada no destino</b>. Como mandar um livro em várias cartas: cada carta pode ir por uma rota, e o destinatário monta o livro quando todas chegam.</div>
 `
 },
 
+
 "redes-a45": {
-  resumo: "Como as aplicações de rede se organizam (cliente-servidor, CDN, P2P, híbrida), o que pedem ao transporte, TCP × UDP e o HTTP por dentro: conexões, mensagens, métodos, códigos de status, cookies e cache.",
+  resumo: "O que são aplicações de rede, as arquiteturas cliente-servidor, CDN, P2P e híbrida, o que cada aplicação exige da rede, TCP x UDP e o HTTP em detalhe: conexões, mensagens, métodos, códigos, cookies e caches.",
   html: `
-<h3>1. Onde as aplicações rodam</h3>
-<p>As aplicações de rede executam <b>nos sistemas finais</b> e conversam pela rede. Os dispositivos do <b>núcleo</b> não rodam aplicações de usuário. Isso é bom: concentrar as aplicações nas pontas permite desenvolver e espalhar novos serviços rapidamente.</p>
+<h3>1. Aplicações de rede</h3>
+<p>Aplicações são <b>programas que executam em sistemas finais diferentes e se comunicam pela rede</b>. Exemplo: o servidor Web conversa com o navegador. O que mudou nos últimos tempos foi o <b>número e a variedade</b>: antes eram poucas aplicações, hoje são muitas e com requisitos bem diferentes.</p>
+<p>Dois pontos importantes:</p>
+<ul>
+<li>os dispositivos do <b>núcleo</b> da rede <b>não executam</b> aplicações de usuário;</li>
+<li>como as aplicações ficam só nos sistemas finais, o desenvolvimento e a disseminação são <b>rápidos</b>.</li>
+</ul>
 
 <h3>2. Arquiteturas de aplicação</h3>
-<p>Há três: <b>cliente-servidor</b>, <b>par-a-par (P2P)</b> e <b>híbrida</b>.</p>
+<p>Três arquiteturas básicas: <b>cliente-servidor</b>, <b>par a par (P2P)</b> e <b>híbrida</b>.</p>
+
+<h4>Cliente-servidor</h4>
 <table>
 <tr><th>Servidor</th><th>Cliente</th></tr>
-<tr><td>nó “especial” que tem o serviço</td><td>faz as requisições</td></tr>
-<tr><td>recebe requisições</td><td>não precisa estar sempre ligado</td></tr>
-<tr><td><b>sempre ligado</b></td><td>endereço pode ser dinâmico</td></tr>
-<tr><td>endereço conhecido e fácil de alcançar</td><td>não fala diretamente com outros clientes</td></tr>
+<tr><td>nó “especial”, tem algum serviço de interesse<br>recebe as requisições<br>está <b>sempre ligado</b><br>tem <b>endereço conhecido</b>, por isso é facilmente alcançável</td><td>faz requisições ao servidor<br>não precisa estar sempre ligado<br>o endereço pode ser <b>dinâmico</b><br>não se comunica diretamente com outros clientes</td></tr>
 </table>
-<h4>O limite do cliente-servidor: o vídeo</h4>
-<p>É ponto-a-ponto: <b>um fluxo de vídeo por usuário</b>. Mais usuários e mais qualidade exigem mais banda e custam mais ao provedor: o modelo deixa de servir.</p>
-<h4>CDN: a saída</h4>
-<p>As <b>Content Distribution Networks</b> tornam o cliente-servidor mais eficiente e escalável. São <b>servidores auxiliares espalhados geograficamente</b> que <b>replicam o conteúdo</b> do servidor de origem e redirecionam a requisição para a <b>réplica mais próxima</b> do cliente (mais taxa, menos latência). Tudo <b>transparente</b> para o cliente.</p>
+<p>O problema aparece quando todos pedem a mesma coisa. Na distribuição de vídeo, por exemplo, há <b>um fluxo por usuário</b>: mais usuários e mais qualidade exigem mais banda e <b>aumentam o custo do provedor</b>. A comunicação ponto a ponto fica inadequada.</p>
+<div class="ex">Uma única padaria atendendo o bairro inteiro: a fila só cresce. A solução é abrir filiais perto das casas, e é essa a ideia das CDNs.</div>
+
+<h4>Redes de distribuição de conteúdo (CDN)</h4>
+<p>Tornam o modelo cliente-servidor mais <b>eficiente e escalável</b>. Há um conjunto de <b>servidores auxiliares</b>, espalhados geograficamente e em diferentes backbones, que <b>replicam o conteúdo</b> do servidor de origem. O pedido do cliente é <b>reencaminhado ao servidor auxiliar mais próximo</b>, o que dá maior taxa de transferência e menor latência, <b>de forma transparente</b> para o cliente.</p>
 <ul>
-<li><b>Desafios</b>: encaminhar a requisição, escolher a réplica, replicar o conteúdo.</li>
-<li><b>Desvantagem</b>: a eficiência depende do número de servidores, logo, custo alto. Ex.: Akamai, com 360 mil servidores em 135 países.</li>
-</ul>
-<h4>P2P e híbrida</h4>
-<p><b>Pura</b>: comunicação direta entre sistemas finais. <b>Híbrida</b>: usa servidores auxiliares (Skype, BitTorrent). Os participantes <b>colaboram</b> compartilhando banda, processamento e armazenamento: <b>mais participantes, mais capacidade</b> (escalabilidade).</p>
-<ul>
-<li><b>Problemas de gerência</b>: não há elemento dedicado, então não há garantia de continuidade; os pares ficam conectados de forma intermitente e mudam de IP.</li>
-<li><b>Exemplo híbrido</b>: no Skype a <b>localização</b> do parceiro é feita por servidor, mas a <b>conversa</b> é direta. Na mensagem instantânea, cada usuário registra seu IP no servidor central ao ficar online e o consulta para achar os contatos.</li>
-<li><b>3 desafios do P2P</b>: ser compatível com os interesses dos ISPs (o tráfego muda: “clientes viram servidores”), <b>segurança</b> (altamente distribuído) e <b>incentivos à cooperação</b> (o usuário compartilha por vontade própria).</li>
+<li><b>Desafios</b>: encaminhar a requisição, escolher o servidor de réplica, replicar o conteúdo.</li>
+<li><b>Desvantagem</b>: a eficiência depende do número de servidores auxiliares, ou seja, <b>custo alto</b>.</li>
+<li><b>Exemplo</b>: a Akamai, com 360 mil servidores em 135 países.</li>
 </ul>
 
-<h3>3. O que a aplicação precisa do transporte</h3>
+<h4>Par a par (P2P)</h4>
+<p>Há comunicação <b>direta entre sistemas finais</b> (na versão “pura”). Os participantes <b>colaboram</b> para o funcionamento e a manutenção do sistema, <b>compartilhando recursos</b> (banda, processamento, armazenamento). <b>Quanto mais participantes, maior a capacidade</b>: é a escalabilidade.</p>
+<p>O problema é o <b>gerenciamento</b>: não há elemento dedicado, então não há garantia de continuidade do serviço, e os pares ficam conectados de forma intermitente e mudam de endereço IP.</p>
+<p><b>Desafios do P2P</b>:</p>
+<ol>
+<li><b>Compatibilidade com os ISPs</b>: muda o perfil do tráfego, porque “clientes passam a ser servidores”.</li>
+<li><b>Segurança</b>: o sistema é altamente distribuído e o usuário tem o controle “nas mãos”.</li>
+<li><b>Incentivos à cooperação</b>: os usuários precisam compartilhar seus recursos voluntariamente.</li>
+</ol>
+
+<h4>Híbrida</h4>
+<p>Mistura P2P com <b>servidores auxiliares</b> (exemplos: Skype, BitTorrent).</p>
 <ul>
-<li><b>Confiabilidade</b>: áudio e vídeo toleram perdas; arquivos, e-mail e SSH exigem 100%.</li>
-<li><b>Largura de banda</b>: multimídia exige um mínimo; Web, e-mail e arquivos são <b>elásticos</b> (se adaptam).</li>
-<li><b>Atraso</b> (temporização).</li>
-<li><b>Segurança</b>: autenticação, controle de acesso, integridade, não-repúdio, confidencialidade.</li>
+<li><b>Skype</b>: aplicação P2P de voz sobre IP. Um <b>servidor</b> ajuda a localizar o endereço do parceiro; a <b>conversa é direta</b>, de cliente para cliente.</li>
+<li><b>Mensagem instantânea</b>: a conversa é direta, mas a <b>localização e a detecção de presença são centralizadas</b>. Ao ficar online, o usuário registra seu IP no servidor central, e consulta o servidor para achar o IP dos contatos.</li>
+</ul>
+<div class="dica">Híbrida = o servidor serve de “lista telefônica”; a conversa em si é de cliente para cliente.</div>
+
+<h3>3. O que as aplicações exigem da rede</h3>
+<ul>
+<li><b>Transferência confiável de dados</b>: algumas toleram perdas (áudio e vídeo não codificados), outras exigem 100% (transferência de arquivos, e-mail, SSH).</li>
+<li><b>Largura de banda</b>: algumas exigem um <b>mínimo</b> para funcionar (multimídia); outras se adaptam à banda disponível, as <b>aplicações elásticas</b> (Web, e-mail, arquivos).</li>
+<li><b>Segurança</b>: autenticação, controle de acesso, integridade, não repúdio e confidencialidade.</li>
 </ul>
 <table>
 <tr><th>Aplicação</th><th>Perda</th><th>Banda</th><th>Atraso</th></tr>
 <tr><td>Transferência de arquivos</td><td>sem perdas</td><td>elástica</td><td>tolerante</td></tr>
 <tr><td>E-mail</td><td>sem perdas</td><td>elástica</td><td>tolerante</td></tr>
 <tr><td>Web</td><td>sem perdas</td><td>elástica</td><td>tolerante</td></tr>
-<tr><td>Áudio/vídeo em tempo real</td><td>tolerante</td><td>vídeo 10 kb–5 Mb; áudio 5 kb–1 Mb</td><td>centenas de ms</td></tr>
+<tr><td>Áudio/vídeo em tempo real</td><td>tolerante</td><td>vídeo: 10 kb–5 Mb; áudio: 5 kb–1 Mb</td><td>centenas de ms</td></tr>
 <tr><td>Áudio/vídeo gravado</td><td>tolerante</td><td>idem</td><td>poucos segundos</td></tr>
 <tr><td>Jogos interativos</td><td>tolerante</td><td>até 10 kbps</td><td>centenas de ms</td></tr>
-<tr><td>Mensagens instantâneas</td><td>sem perdas</td><td>elástica</td><td>sim/não (?)</td></tr>
+<tr><td>Mensagens instantâneas</td><td>sem perdas</td><td>elástica</td><td>sim/não</td></tr>
 </table>
 
-<h3>4. TCP × UDP e quem usa o quê</h3>
+<h3>4. Serviços da camada de transporte</h3>
 <table>
 <tr><th>TCP</th><th>UDP</th></tr>
-<tr><td>orientado a conexão (mensagens de controle antes dos dados)</td><td>sem conexão</td></tr>
-<tr><td>transporte <b>confiável</b> entre processos</td><td>transferência <b>não confiável</b></td></tr>
-<tr><td>controle de <b>fluxo</b></td><td>sem controle de fluxo</td></tr>
-<tr><td>controle de <b>congestionamento</b></td><td>sem controle de congestionamento</td></tr>
+<tr><td><b>Orientado a conexão</b>: troca mensagens de controle antes das mensagens da aplicação<br><b>Transporte confiável</b> entre os processos emissor e receptor<br><b>Controle de fluxo</b>: o emissor não sobrecarrega o receptor<br><b>Controle de congestionamento</b>: a taxa de envio depende da carga da rede<br>Não oferece garantias de tempo nem de banda mínima</td><td>Transferência <b>não confiável</b> entre os processos<br><b>Não provê</b>: estabelecimento de conexão, confiabilidade, controle de fluxo, controle de congestionamento, nem garantias de tempo ou de banda mínima</td></tr>
 </table>
-<div class="dica">Nenhum dos dois dá garantias de <b>tempo</b> nem de <b>banda mínima</b>.</div>
 <table>
-<tr><th>Aplicação</th><th>Protocolo</th><th>Transporte</th></tr>
+<tr><th>Aplicação</th><th>Protocolo de aplicação</th><th>Transporte</th></tr>
 <tr><td>E-mail</td><td>SMTP</td><td>TCP</td></tr>
 <tr><td>Acesso remoto</td><td>Telnet, SSH</td><td>TCP</td></tr>
 <tr><td>Web</td><td>HTTP</td><td>TCP</td></tr>
 <tr><td>Transferência de arquivos</td><td>FTP</td><td>TCP</td></tr>
-<tr><td>Multimídia</td><td>HTTP, RTP</td><td>TCP ou UDP</td></tr>
+<tr><td>Distribuição multimídia</td><td>HTTP, RTP</td><td>TCP ou UDP</td></tr>
 <tr><td>Telefonia na Internet</td><td>SIP, RTP, proprietário (Skype)</td><td>tipicamente UDP</td></tr>
 </table>
 
-<h3>5. Protocolo da camada de aplicação</h3>
-<p>Define os <b>tipos de mensagem</b> (requisição, resposta), a <b>sintaxe</b> (campos e como se identificam), a <b>semântica</b> (o que cada campo significa) e as <b>regras</b> de quando enviar e responder. Pode ser de <b>domínio público</b> (definido em <b>RFCs</b> do IETF; <i>drafts</i> são versões ainda abertas) ou <b>proprietário</b> (código fechado, ex.: Skype).</p>
+<h3>5. Protocolos da camada de aplicação</h3>
+<p>Um protocolo de aplicação define:</p>
+<ul>
+<li>os <b>tipos de mensagem</b> trocadas (requisição e resposta);</li>
+<li>a <b>sintaxe</b>: os campos presentes e como são identificados;</li>
+<li>a <b>semântica</b>: o significado da informação de cada campo;</li>
+<li>as <b>regras</b> de quando os processos enviam e respondem às mensagens.</li>
+</ul>
+<p>Podem ser de <b>domínio público</b> (em geral definidos em <b>RFCs</b>, documentos sob responsabilidade do <b>IETF</b>; os <i>drafts</i> são versões ainda em aberto) ou <b>proprietários</b> (código fechado, como o Skype).</p>
 
-<h3>6. HTTP</h3>
-<p>Uma página Web tem um <b>arquivo-base HTML</b> que referencia vários <b>objetos</b> (imagens, áudio, applets…); cada um é endereçável por uma <b>URL</b>: nome do hospedeiro + nome do caminho, como em <code>www.ic.uff.br/~igor/cursos/index.html</code>.</p>
-<p>O HTTP é cliente/servidor (navegador × servidor) e usa <b>TCP, geralmente na porta 80</b>: o cliente abre a conexão, o servidor aceita, trocam mensagens e o servidor fecha.</p>
-<h4>Sem estado</h4>
-<p>O servidor <b>não guarda nada</b> sobre pedidos anteriores: se você pede o mesmo objeto de novo, ele é reenviado. É de propósito: guardar estado é complexo (memória) e, se cliente ou servidor caírem, as visões do estado podem ficar inconsistentes.</p>
-<h4>Conexão persistente × não persistente</h4>
-<table>
-<tr><th>Não persistente</th><th>Persistente (HTTP/1.1)</th></tr>
-<tr><td>uma requisição/resposta por conexão TCP</td><td>várias requisições/respostas na mesma conexão</td></tr>
-<tr><td>2 RTTs por objeto + SO aloca recursos a cada conexão</td><td>pode bastar 1 RTT para todos os objetos referenciados</td></tr>
-<tr><td>navegadores abrem conexões paralelas</td><td>o servidor deixa a conexão aberta</td></tr>
-</table>
-<p>No não persistente, o tempo de resposta é <b>2 RTT + tempo de transmissão do arquivo</b>: 1 RTT para o handshake do TCP e 1 RTT para o pedido e os primeiros bytes da resposta.</p>
-<div class="ex">Com RTT de 50 ms e um arquivo que leva 10 ms para transmitir: 2 × 50 + 10 = <b>110 ms</b> por objeto. Numa página com 10 objetos sem paralelismo, isso se repete 10 vezes; com conexão persistente, o custo do handshake só aparece uma vez.</div>
-<h4>Mensagem de requisição (texto ASCII)</h4>
-<pre>GET /somedir/page.html
-    HTTP/1.0
+<h3>6. HTTP: conceitos</h3>
+<p>Uma página Web é feita de <b>objetos</b> (um arquivo HTML, uma imagem JPEG, um applet Java, um áudio…). Há um <b>arquivo-base HTML</b> que referencia vários objetos, e cada objeto é endereçável por uma <b>URL</b>.</p>
+<pre>www.ic.uff.br/~igor/cursos/index.html
+\\_________/ \\_____________________/
+ hospedeiro      caminho</pre>
+<p>O HTTP é o protocolo da navegação Web, no modelo <b>cliente-servidor</b>: o cliente é o <b>navegador</b> (pede, recebe e visualiza objetos); o servidor Web (por exemplo, o Apache) envia objetos em resposta aos pedidos.</p>
+<p>Ele usa o <b>TCP</b>:</p>
+<ol>
+<li>o cliente inicia uma conexão TCP com o servidor, geralmente na <b>porta 80</b>;</li>
+<li>o servidor aceita a conexão;</li>
+<li>navegador e servidor trocam mensagens HTTP;</li>
+<li>o servidor encerra a conexão.</li>
+</ol>
+<p>É um protocolo <b>sem estado</b>: o servidor <b>não guarda informação</b> sobre pedidos anteriores. Se o mesmo objeto for pedido de novo, é reenviado. Por que assim? Protocolos com estado são complexos: é preciso guardar o passado (consome memória) e, se cliente ou servidor cair, as visões de “estado” podem ficar inconsistentes.</p>
+<div class="ex">Um garçom sem memória: cada vez que você chama, ele pergunta tudo de novo. Simples para ele, trabalhoso para você, e é aí que entram os cookies.</div>
+
+<h3>7. Conexões não persistentes e persistentes</h3>
+<h4>Não persistente</h4>
+<p>Uma requisição/resposta por conexão TCP. Para abrir <b>www.ic.uff.br</b>:</p>
+<ol>
+<li>o cliente inicia a conexão TCP com o servidor, na porta 80 (SYN, SYN+ACK, ACK: <b>three-way handshake</b>);</li>
+<li>o cliente envia o pedido HTTP pela conexão, indicando o objeto desejado (<i>index.html</i>);</li>
+<li>o servidor monta a resposta com o objeto e a envia;</li>
+<li>o servidor encerra a conexão (FIN/ACK);</li>
+<li>o cliente recebe o HTML e visualiza. Ao analisá-lo, encontra imagens JPEG referenciadas e <b>repete os passos de 1 a 5 para cada objeto</b>.</li>
+</ol>
+<p><b>Tempo de resposta</b> (entre pedir e receber um objeto) = 1 RTT para abrir a conexão TCP + 1 RTT para o pedido HTTP e a volta dos primeiros bytes + tempo de transmissão do arquivo. Ou seja, <b>2 RTT + tempo de transmissão</b>.</p>
+<ul>
+<li><b>Prós</b>: os navegadores costumam abrir conexões TCP <b>paralelas</b> para buscar os objetos referenciados.</li>
+<li><b>Contras</b>: exige <b>2 RTTs por objeto</b> e o sistema operacional aloca recursos do hospedeiro para cada conexão.</li>
+</ul>
+<h4>Persistente</h4>
+<p>Presente no <b>HTTP/1.1</b>. O servidor <b>deixa a conexão aberta</b> depois da resposta; as mensagens seguintes entre os mesmos cliente e servidor usam essa conexão. O cliente envia os pedidos <b>assim que encontra</b> um objeto referenciado. Pode bastar <b>um RTT</b> para todos os objetos.</p>
+<div class="dica">Não persistente: abrir e fechar a porta a cada objeto. Persistente: deixar a porta aberta e passar todos os objetos por ela.</div>
+
+<h3>8. Mensagens HTTP</h3>
+<p>São dois tipos, <b>requisição</b> e <b>resposta</b>, ambos em <b>ASCII</b> (legível por pessoas).</p>
+<h4>Requisição</h4>
+<pre>GET /somedir/page.html HTTP/1.0
 Host: www.someschool.edu
 User-agent: Mozilla/4.0
 Connection: close
 Accept-language: fr
-(linha em branco)</pre>
-<p>A primeira linha é a <b>linha da requisição</b>; as demais são <b>cabeçalhos</b>; a linha em branco (CR LF) marca o fim.</p>
-<p><b>Métodos do HTTP/1.1</b> (RFC 2616): GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS e CONNECT. Dizem o que o servidor deve fazer com a URL. O <b>GET</b> pede um recurso.</p>
-<h4>GET condicional e formulários</h4>
+(linha em branco = fim)</pre>
+<p>A primeira linha é a <b>linha da requisição</b>; as seguintes são <b>linhas de cabeçalho</b>; um <b>CR/LF extra</b> (linha em branco) indica o fim da mensagem.</p>
+<p>A linha da requisição traz o <b>método</b>, o recurso e a versão. Os métodos determinam o que o servidor deve fazer com a URL. O HTTP/1.1 tem <b>oito</b> (RFC 2616): <b>GET</b>, <b>HEAD</b>, <b>POST</b>, <b>PUT</b>, <b>DELETE</b>, <b>TRACE</b>, <b>OPTIONS</b> e <b>CONNECT</b>. O GET pede um recurso, como um arquivo (<code>GET /index.html HTTP/1.1</code>, com <code>Host: www.ic.uff.br</code>).</p>
+<h4>Envio de formulários</h4>
 <ul>
-<li><b>GET condicional</b>: o cache manda <code>If-modified-since: &lt;data&gt;</code>. Se a cópia está atual, o servidor responde <b>304 Not Modified</b> (sem o objeto); se mudou, <b>200 OK</b> com o objeto.</li>
-<li><b>Formulários</b>: com <b>POST</b> o conteúdo vai no <b>corpo</b> da mensagem; com GET ele vai na <b>URL</b>, como em <code>…/animalsearch?key=monkeys&amp;max=10</code>.</li>
+<li><b>Método POST</b>: o conteúdo vai no <b>corpo</b> da mensagem.</li>
+<li><b>Método URL</b>: usa o <b>GET</b>, e o conteúdo vai no <b>campo da URL</b>, como em <code>www.somesite.com/animalsearch?key=monkeys&amp;max=10</code>.</li>
 </ul>
-<h4>Mensagem de resposta e códigos de status</h4>
+<h4>Resposta</h4>
 <pre>HTTP/1.1 200 OK
-Connection: close
-Date: ...
-Server: Apache/1.3.0
-Last-Modified: ...
+Connection close
+Date: Thu, 06 Aug 1998 12:00:15 GMT
+Server: Apache/1.3.0 (Unix)
+Last-Modified: Mon, 22 Jun 1998 ...
 Content-Length: 6821
 Content-Type: text/html
 
-(dados: o arquivo HTML)</pre>
+dados dados dados ...</pre>
+<p>A primeira linha é a <b>linha de status</b>; depois vêm as <b>linhas de cabeçalho</b>; no fim, os <b>dados</b> (o arquivo HTML pedido).</p>
+<p>A linha de status tem protocolo, <b>código</b> e frase. Códigos típicos:</p>
 <table>
 <tr><th>Código</th><th>Significado</th></tr>
-<tr><td><b>200 OK</b></td><td>sucesso; o objeto vem nesta mensagem</td></tr>
-<tr><td><b>301 Moved Permanently</b></td><td>o objeto mudou; a nova localização está em <code>Location:</code></td></tr>
-<tr><td><b>400 Bad Request</b></td><td>o servidor não entendeu o pedido</td></tr>
-<tr><td><b>404 Not Found</b></td><td>o documento não está neste servidor</td></tr>
-<tr><td><b>505 HTTP Version Not Supported</b></td><td>versão do HTTP não usada por este servidor</td></tr>
+<tr><td><b>200 OK</b></td><td>sucesso; o objeto pedido vem nesta mensagem</td></tr>
+<tr><td><b>301 Moved Permanently</b></td><td>o objeto mudou de lugar; a nova localização vem no campo <i>Location:</i></td></tr>
+<tr><td><b>400 Bad Request</b></td><td>o servidor não entendeu a requisição</td></tr>
+<tr><td><b>404 Not Found</b></td><td>o documento pedido não está neste servidor</td></tr>
+<tr><td><b>505 HTTP Version Not Supported</b></td><td>o servidor não usa essa versão do HTTP</td></tr>
 </table>
 
-<h3>7. Cookies</h3>
-<p>Como o HTTP não guarda estado, os <b>cookies</b> guardam estado dentro das próprias mensagens. São <b>4 componentes</b>: (1) a linha <code>Set-cookie:</code> na resposta, (2) a linha <code>cookie:</code> no pedido seguinte, (3) o arquivo do cookie na máquina do usuário, gerenciado pelo navegador, e (4) um banco de dados de retaguarda no site.</p>
-<p>Servem para autorização, carrinho de compras, sugestões e estado da sessão (webmail). O custo é a <b>privacidade</b>: os sites aprendem muito sobre você.</p>
-<div class="ex">Você põe um produto no carrinho e navega para outra página: sem cookie, o servidor não saberia que é você de novo. Com o cookie, seu navegador devolve o “número da sua sessão” a cada pedido.</div>
+<h3>9. GET condicional</h3>
+<p>Objetivo: <b>não reenviar um objeto</b> que o cliente (no cache) já tem na versão atual. O cache indica a data da sua cópia no pedido: <code>If-modified-since: &lt;data&gt;</code>. O servidor responde:</p>
+<ul>
+<li>se a cópia está atual: <b>304 Not Modified</b>, sem o objeto;</li>
+<li>se o objeto foi modificado: <b>200 OK</b> com o objeto.</li>
+</ul>
 
-<h3>8. Cache Web (proxy)</h3>
-<p>Meta: atender o cliente <b>sem envolver o servidor de origem</b>. O cliente manda tudo ao proxy; se o objeto está no cache, ele devolve na hora; se não, busca na origem e depois devolve. O cache é <b>cliente e servidor ao mesmo tempo</b> e costuma ser instalado por um ISP (universidade, empresa, provedor residencial). Vantagem: menos tempo de resposta e menos tráfego no canal de acesso. O ganho depende da <b>taxa de acerto</b> (<i>hit ratio</i>).</p>
+<h3>10. Cookies</h3>
+<p>Uma maneira de <b>guardar estado</b> sobre um protocolo sem estado, usada por quase todos os sites. São <b>quatro componentes</b>:</p>
+<ol>
+<li>uma linha de cabeçalho do cookie na <b>resposta</b> HTTP (<i>Set-cookie</i>);</li>
+<li>uma linha de cabeçalho do cookie no <b>pedido</b> HTTP;</li>
+<li>um <b>arquivo de cookies</b> na estação do usuário, gerenciado pelo navegador;</li>
+<li>um <b>banco de dados de retaguarda</b> no site.</li>
+</ol>
+<div class="ex">Suzana acessa sempre do mesmo PC e visita pela primeira vez um site de comércio eletrônico. Quando o primeiro pedido chega, o site cria uma <b>ID única</b> (digamos, 1678) e uma entrada para ela no banco de dados. Na resposta vai <i>Set-cookie: 1678</i>; o navegador guarda isso no arquivo de cookies (junto aos de outros sites, como ebay: 8734). Nos pedidos seguintes ela manda <i>cookie: 1678</i> e o site faz a ação específica para ela, mesmo uma semana depois.</div>
+<p>Cookies servem para <b>autorização</b>, <b>carrinhos de compra</b>, <b>sugestões</b> e <b>estado da sessão</b> (como o webmail). Como manter estado: os pontos finais do protocolo mantêm o estado no transmissor/receptor em várias transações, ou os cookies fazem as mensagens HTTP carregarem o estado.</p>
+<p><b>Privacidade</b>: os cookies permitem que os sites aprendam muito sobre você, especialmente se você fornece nome e e-mail.</p>
+
+<h3>11. Web caches (proxies)</h3>
+<p>Meta: <b>atender o pedido do cliente sem envolver o servidor de origem</b>.</p>
+<ol>
+<li>O usuário configura o navegador para acessar a Web <b>via proxy</b> (também existem proxies transparentes).</li>
+<li>O navegador envia todos os pedidos HTTP ao proxy.</li>
+<li>Se o objeto está no cache do proxy, ele <b>responde imediatamente</b>.</li>
+<li>Senão, o proxy pede o objeto ao servidor de origem e depois o devolve ao cliente.</li>
+</ol>
+<p>O cache atua como <b>cliente e servidor</b> ao mesmo tempo, e é tipicamente instalado por um ISP (universidade, empresa, ISP residencial). Serve para <b>reduzir o tempo de resposta</b> e <b>reduzir o tráfego no canal de acesso</b> da instituição. O desempenho depende da <b>taxa de acerto</b> (<i>hit ratio</i>).</p>
+<div class="dica">Cache de proxy = o armário de itens mais pedidos na portaria: se o item está lá, ninguém precisa ir até o depósito.</div>
 `
 },
+
 
 "redes-a6": {
   resumo: "Como funciona o e-mail (agentes, servidores, SMTP, POP3, IMAP) e como o DNS traduz nomes em endereços IP: hierarquia de servidores, cache, consultas iterativas e recursivas e os registros de recurso.",
