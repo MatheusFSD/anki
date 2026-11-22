@@ -9,7 +9,7 @@ linguagem simples**, com exemplos do dia a dia, na aba **Resumos** (veja [abaixo
 | Matéria | Código | Aulas | Cartões | Resumos |
 |---|---|---|---|---|
 | Gerência de Projetos e Manutenção de Software | TCC00363 | 17 | 358 | Aulas 8 a 14 |
-| Redes de Computadores para Sistemas de Informação | TCC00359 | 10 | 235 | — |
+| Redes de Computadores para Sistemas de Informação | TCC00359 | 10 | 235 | 8 aulas (slides) |
 
 ## Como funciona
 
@@ -41,11 +41,14 @@ Dentro de uma matéria com resumos aparecem duas abas: **Baralhos** (as aulas e 
 - O texto traz seções numeradas, tabelas e caixas de **exemplo simples** e **para guardar**
 - No fim da leitura há um botão para **estudar os cartões daquela aula**
 - **Esc** (ou a seta ‹) volta para a matéria, na mesma aba em que você estava
-- Matérias sem nenhum resumo escrito (hoje, Redes) não mostram as abas
+- Matérias sem nenhum resumo escrito não mostram as abas
 
 Hoje há resumos das **aulas 8 a 14 de GPMS**: Git (aula 8), Gerência de Configuração (aulas 9, 10 e 11),
 Manutenção de Software (aulas 12 e 13) e a **revisão da aula 14**, que é uma página de perguntas e respostas
 com os 20 exercícios resolvidos (os slides trazem só os enunciados; as respostas são resolução própria).
+
+Em **Redes** há resumo das 8 aulas de slides: aulas 1–3, 4–5, 6, 7, 8–10, 11–14, 15 e 16. As duas listas do
+Kurose (caps. 1 e 2) ficam só como cartões. Os resumos foram escritos a partir dos cartões de cada aula.
 
 ## Progresso (sem banco de dados)
 
@@ -146,6 +149,7 @@ css/style.css         estilos (mobile first, tema claro/escuro)
 js/data-gpms.js       358 cartões de GPMS
 js/data-redes.js      235 cartões de Redes
 js/resumos-gpms.js    resumos em linguagem simples das aulas de GPMS
+js/resumos-redes.js   resumos em linguagem simples das aulas de Redes
 js/sync.js            leitura/escrita do JSON no repositório (API do GitHub)
 js/app.js             agendador SM-2, telas e persistência
 dados/progresso.json  progresso sincronizado
@@ -179,4 +183,4 @@ Em `js/resumos-gpms.js`, a chave é o `id` da aula em `data-gpms.js` (ex.: `"gpm
 
 O `html` aceita `<h3>`, `<h4>`, `<p>`, listas, `<table>`, `<code>` e `<pre>`. Dentro de um `<pre>`,
 escreva a barra invertida em dobro (`\\`), por causa dos *template literals*. Para outra matéria,
-crie um arquivo parecido e ligue-o em `app.js` do mesmo jeito que `RESUMOS_GPMS`.
+crie um arquivo parecido e ligue-o em `app.js` e no `index.html` do mesmo jeito que `RESUMOS_GPMS` e `RESUMOS_REDES`.

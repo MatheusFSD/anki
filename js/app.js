@@ -8,6 +8,9 @@ const SUBJECTS = [GPMS, REDES];
 if (typeof RESUMOS_GPMS !== "undefined"){
   for (const l of GPMS.lessons) if (RESUMOS_GPMS[l.id]) l.resumo = RESUMOS_GPMS[l.id];
 }
+if (typeof RESUMOS_REDES !== "undefined"){
+  for (const l of REDES.lessons) if (RESUMOS_REDES[l.id]) l.resumo = RESUMOS_REDES[l.id];
+}
 const STORE_KEY = "ankiuff.progress.v1";
 const CFG_KEY   = "ankiuff.config.v1";
 const DAY = 86400000;
