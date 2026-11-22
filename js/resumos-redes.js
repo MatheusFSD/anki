@@ -608,335 +608,516 @@ Teste de envio de correio.</pre>
 
 
 "redes-a8910": {
-  resumo: "Camada de transporte: portas e sockets, multiplexação, UDP (cabeçalho e checksum), como construir um canal confiável sobre um canal que erra e perde (ACK, número de sequência, temporizador, paralelismo) e as características do TCP.",
+  resumo: "A camada de transporte: canal lógico entre processos, sockets, portas, multiplexação, o UDP (cabeçalho e checksum), os princípios da transferência confiável de dados (ACK, NAK, número de sequência, temporizador, pipelining) e a introdução ao TCP.",
   html: `
 <h3>1. O que a camada de transporte faz</h3>
-<p>Cria um <b>canal lógico de comunicação entre processos</b> em sistemas finais diferentes: para a aplicação, parece que as duas pontas estão ligadas diretamente (<b>fim-a-fim</b>). Os protocolos de transporte rodam <b>só nos sistemas finais</b>: quem envia converte as mensagens em <b>segmentos</b> e os entrega à rede; quem recebe remonta as mensagens e as entrega à aplicação.</p>
+<p>Ela provê um <b>canal lógico de comunicação entre processos</b> em sistemas finais diferentes. Para a aplicação, é como se os sistemas finais estivessem <b>diretamente conectados</b>, mesmo havendo roteadores e enlaces no meio.</p>
+<ul>
+<li>Os protocolos de transporte rodam <b>só nos sistemas finais</b> (os roteadores no meio não os executam).</li>
+<li><b>Transmissor</b>: converte as mensagens da aplicação em <b>segmentos</b> e os entrega à camada de rede.</li>
+<li><b>Receptor</b>: recebe os segmentos da camada de rede, <b>remonta as mensagens</b> e as entrega à aplicação.</li>
+</ul>
+<p>Existem diferentes protocolos de transporte, com diferentes tipos de serviço, e a aplicação usa o mais adequado ao seu propósito. Na Internet são dois: o <b>UDP</b> (<i>User Datagram Protocol</i>) e o <b>TCP</b> (<i>Transmission Control Protocol</i>).</p>
+
+<h3>2. Transporte x Rede</h3>
 <table>
-<tr><th>Transporte</th><th>Rede</th></tr>
-<tr><td>canal lógico entre <b>processos</b></td><td>canal lógico entre <b>estações</b></td></tr>
-<tr><td>usa e pode estender os serviços da rede</td><td>entrega de <b>melhor esforço</b>: não garante entrega, ordem nem integridade</td></tr>
+<tr><th>Camada de rede</th><th>Camada de transporte</th></tr>
+<tr><td>canal lógico entre <b>estações</b> (sistemas finais)<br>serviço de <b>melhor esforço</b>: não garante a entrega, a ordem nem a integridade dos dados dos segmentos (<b>serviço não confiável</b>)</td><td>canal lógico entre <b>processos</b> que rodam nos sistemas finais<br><b>depende</b> dos serviços da camada de rede e pode <b>estendê-los</b></td></tr>
 </table>
-<p><b>Serviços mínimos</b> do transporte: estender a entrega de “entre sistemas finais” para “entre processos” (<b>multiplexação e demultiplexação</b>) e <b>verificar integridade</b> (campos de detecção de erros no cabeçalho).</p>
+<div class="ex">Um prédio com vários moradores: a camada de rede entrega a correspondência no <b>endereço do prédio</b>; a camada de transporte faz chegar à <b>pessoa certa</b> dentro dele.</div>
+<p><b>Serviços mínimos</b> que o transporte acrescenta: <b>multiplexação e demultiplexação</b> (entre processos) e <b>verificação de integridade</b> (campos de detecção de erros no cabeçalho).</p>
 <table>
 <tr><th>UDP</th><th>TCP</th></tr>
-<tr><td>só os serviços mínimos: entrega não confiável e fora de ordem</td><td>entrega <b>confiável e ordenada</b>, conexão, controle de congestionamento e de fluxo</td></tr>
+<tr><td>só os serviços mínimos<br>entrega <b>não confiável e não ordenada</b></td><td>mais que o mínimo<br>entrega <b>confiável e ordenada</b>, <b>estabelecimento de conexão</b>, <b>controle de congestionamento</b> e <b>controle de fluxo</b></td></tr>
 </table>
-<div class="dica">Nenhum dos dois garante <b>atraso máximo</b> nem <b>banda mínima</b>.</div>
+<div class="dica">Nenhum dos dois garante requisitos de <b>atraso</b> nem de <b>banda passante</b>.</div>
 
-<h3>2. Socket e porta</h3>
-<p>O <b>socket</b> é a interface de software entre a aplicação e o transporte, a “API da rede”. O processo manda e recebe mensagens pelo seu socket.</p>
-<div class="ex">O processo é uma casa e o socket é a porta: quem envia empurra a mensagem pela porta e confia na infraestrutura do outro lado para levá-la ao destinatário.</div>
-<p>A API de sockets nasceu no Unix BSD 4.1, em 1981; os sockets são criados, usados e liberados <b>explicitamente</b> pela aplicação, no paradigma cliente-servidor, com dois serviços: <b>datagrama não confiável (UDP)</b> e <b>fluxo de bytes confiável (TCP)</b>. O programador controla tudo do lado da aplicação, mas pouco do lado do transporte (escolhe o protocolo e alguns parâmetros).</p>
-<p>O IP <b>não basta</b> para identificar um processo, porque várias aplicações rodam na mesma máquina. O identificador completo é <b>IP + número de porta</b>. Ex.: HTTP em www.ic.uff.br é o IP 200.20.15.38, porta 80; servidor de e-mail, porta 25.</p>
-
-<h3>3. Multiplexação e demultiplexação</h3>
+<h3>3. Processos e sockets</h3>
+<p>Um <b>processo</b> é um programa em execução em um sistema final. No <b>mesmo</b> sistema, dois processos se comunicam por comunicação interprocessos definida pelo SO; em sistemas <b>diferentes</b>, trocam <b>mensagens</b> pela rede. O processo <b>cliente</b> inicia a comunicação; o <b>servidor</b> espera ser contatado. Em aplicações P2P, os sistemas finais executam os dois.</p>
+<p>O processo envia e recebe mensagens pelo seu <b>socket</b>: uma <b>interface de software entre as camadas de aplicação e de transporte</b>, uma API (<i>Application Programming Interface</i>).</p>
+<div class="ex">O processo é uma <b>casa</b> e o socket é a <b>porta</b>. Para enviar, a mensagem é empurrada pela porta, confiando na infraestrutura de transporte do outro lado dela para levá-la ao destinatário. Para receber, a mensagem passa pela porta e o receptor age sobre ela.</div>
 <ul>
-<li><b>Multiplexação</b> (quem envia): junta mensagens de vários sockets e acrescenta um cabeçalho.</li>
-<li><b>Demultiplexação</b> (quem recebe): usa o cabeçalho para entregar o segmento ao <b>socket certo</b>.</li>
+<li>O desenvolvedor controla <b>tudo do lado da camada de aplicação</b> e, na camada de transporte, só a <b>escolha do protocolo</b> e <b>alguns parâmetros</b> (como buffers). O resto é controlado pelo SO.</li>
+<li>A <b>Socket API</b> surgiu no Unix BSD 4.1, em <b>1981</b>. Os sockets são criados, usados e liberados explicitamente pelas aplicações, baseados no paradigma cliente-servidor.</li>
+<li>Dois tipos de serviço pela API: <b>datagrama não confiável</b> (UDP) e <b>fluxo de bytes confiável</b> (TCP).</li>
+</ul>
+
+<h3>4. Endereçando processos</h3>
+<p>Uma interface de rede tem um identificador único (o <b>endereço IP</b> de 32 bits). Mas o IP da estação <b>não basta</b> para identificar o processo, porque <b>vários processos</b> podem rodar na mesma estação. O identificador inclui o <b>IP</b> e o <b>número de porta</b> do processo.</p>
+<p>Exemplos de portas: servidor HTTP <b>80</b>; servidor de e-mail <b>25</b>. Para mandar uma mensagem HTTP ao servidor www.ic.uff.br, o destino é o IP <b>200.20.15.38</b> e a porta <b>80</b>.</p>
+
+<h3>5. Multiplexação e demultiplexação</h3>
+<ul>
+<li><b>Multiplexação</b> (no emissor): recebe as mensagens de vários sockets, agrupa as de um mesmo socket e <b>adiciona um cabeçalho</b>.</li>
+<li><b>Demultiplexação</b> (no receptor): identifica a qual processo pertence o segmento e o <b>encaminha ao socket correto</b>, com base nos campos do cabeçalho (IPs de origem e destino, portas de origem e destino).</li>
 </ul>
 <table>
-<tr><th></th><th>UDP (sem conexão)</th><th>TCP (com conexão)</th></tr>
-<tr><td><b>Identifica o socket por</b></td><td><b>IP de destino + porta de destino</b></td><td>a <b>quádrupla</b>: IP de origem, porta de origem, IP de destino, porta de destino</td></tr>
-<tr><td><b>Um socket recebe de origens diferentes?</b></td><td><b>Sim</b>; a origem serve só de endereço de retorno</td><td><b>Não</b>; cada segmento vai para um socket específico</td></tr>
+<tr><th>Com UDP (sem conexão)</th><th>Com TCP (orientado à conexão)</th></tr>
+<tr><td>Identificado por <b>IP de destino</b> (para chegar à máquina) + <b>porta de destino</b>. O sistema final verifica a porta de destino e entrega ao socket com aquele número.<br>Um socket <b>pode</b> receber segmentos de diferentes IPs/portas de origem. Só as informações do destino são usadas; a origem serve de <b>endereço de retorno</b>.</td><td>Identificado pela <b>quádrupla</b>: IP de origem, porta de origem, IP de destino, porta de destino.<br>Um socket <b>não pode</b> receber de origens diferentes: cada segmento vai para <b>um único</b> socket.<br>Um servidor sustenta <b>muitos sockets TCP simultâneos</b>, cada um com a sua quádrupla. Servidores Web têm um socket por conexão de cliente; com HTTP não persistente, um socket diferente para cada pedido.</td></tr>
 </table>
-<p>Por isso um servidor Web tem <b>um socket TCP por conexão</b> de cliente (e, em HTTP não persistente, um por pedido).</p>
 
-<h3>4. UDP</h3>
-<p>Definido na RFC 768: o transporte mínimo, de melhor esforço. Segmentos podem se perder ou chegar fora de ordem. É <b>sem conexão</b>: cada segmento é tratado de forma independente.</p>
-<p><b>Por que existe?</b> (1) não tem estabelecimento de conexão, logo <b>menor latência</b>; (2) é simples, sem estado de conexão; (3) <b>cabeçalho pequeno (8 bytes)</b>; (4) <b>sem controle de congestionamento</b>: pode enviar o mais rápido que quiser.</p>
-<p>Formato: cabeçalho de 8 bytes com 4 campos de 16 bits, seguido dos dados.</p>
-<pre>Porta origem | Porta destino
-Comprimento  | Checksum
-Dados da aplicação</pre>
-<p>O <b>comprimento</b> é em bytes, cabeçalho incluído. Usado por DNS, SNMP, RIP, NFS e por multimídia (tolerante a perdas, sensível à taxa). Se a aplicação precisa de confiabilidade sobre UDP, ela mesma tem de acrescentá-la.</p>
+<h3>6. UDP (<i>User Datagram Protocol</i>)</h3>
+<p>Definido na <b>RFC 768</b>, é o protocolo de transporte <b>mínimo</b>: serviço de melhor esforço, em que os segmentos podem ser <b>perdidos</b> ou entregues <b>fora de ordem</b>. É <b>sem conexão</b>: não há <i>setup</i> entre remetente e receptor, e cada segmento é tratado independentemente.</p>
+<p><b>Por que existe</b>, se é tão simples?</p>
+<ul>
+<li>elimina o estabelecimento de conexão (<b>menor latência</b>);</li>
+<li>é simples: <b>não mantém estado</b> de conexão nem no remetente nem no receptor;</li>
+<li>o <b>cabeçalho é reduzido</b>;</li>
+<li>não tem controle de congestionamento: transmite <b>tão rápido quanto desejado (e possível)</b>.</li>
+</ul>
+<p><b>Quem usa</b>: aplicações multimídia (tolerantes a perdas e sensíveis à taxa de transmissão) e protocolos como <b>NFS</b> (servidor de arquivos remoto), <b>SNMP</b> (gerenciamento de rede, para reduzir o tempo de reação a um problema), <b>RIP</b> (roteamento) e <b>DNS</b> (para reduzir a latência da requisição de páginas Web), todos tipicamente sobre UDP. Telefonia na Internet e distribuição multimídia usam TCP ou UDP.</p>
+<p><b>Confiabilidade sobre UDP</b>? É preciso <b>acrescentá-la na camada de aplicação</b>: recuperação de erro específica de cada aplicação.</p>
+<h4>Formato do segmento</h4>
+<p>O cabeçalho tem <b>8 bytes</b>, em 4 campos de 16 bits:</p>
+<table>
+<tr><th>Campo</th><th>Função</th></tr>
+<tr><td>porta de origem</td><td>identifica o processo emissor</td></tr>
+<tr><td>porta de destino</td><td>identifica o processo receptor</td></tr>
+<tr><td>comprimento</td><td>tamanho do segmento UDP em bytes, <b>incluindo o cabeçalho</b></td></tr>
+<tr><td>soma de verificação (checksum)</td><td>detecta erros</td></tr>
+</table>
+<p>Depois vêm os dados (a mensagem da aplicação).</p>
 <h4>Checksum</h4>
-<p>Detecta erros (bits trocados). Quem envia trata o segmento como inteiros de 16 bits, zera o campo checksum, <b>soma em complemento de 1</b> (o transbordo do bit mais alto é somado de volta) e grava o <b>complemento</b> da soma. Quem recebe soma tudo, incluindo o checksum: se der <b>FFFF</b>, nenhum erro foi detectado.</p>
-<div class="ex">Duas palavras: 1234 e F0F0 (em hexadecimal). A soma é 10324; o “vai-um” volta para o início e dá 0325. O complemento é <b>FCDA</b>, que vai no campo checksum. O receptor soma 1234 + F0F0 + FCDA = 1FFFE; com o “vai-um”, FFFF. Tudo certo.</div>
-<div class="dica">Dar FFFF não prova que não houve erro: <b>ainda pode haver</b> erros (por exemplo, dois erros que se compensam).</div>
-
-<h3>5. Construindo um canal confiável</h3>
-<p>Um <b>canal confiável</b> não corrompe, não perde e entrega <b>em ordem</b>. Um protocolo de transferência confiável (rdt) o constrói sobre um canal não confiável; quanto pior o canal, mais complexo o protocolo. As primitivas são <code>rdt_send()</code> (a aplicação entrega dados), <code>udt_send()</code> (envia pelo canal ruim), <code>rdt_rcv()</code> (chega um pacote) e <code>deliver_data()</code> (entrega à camada de cima).</p>
-<h4>Passo a passo, da versão simples à completa</h4>
-<table>
-<tr><th>Problema</th><th>Solução</th></tr>
-<tr><td><b>Bits trocados</b></td><td><b>Detectar</b> com checksum e <b>recuperar</b> com ACK (recebi certo) e NAK (veio com erro, reenvie). É o mecanismo ARQ</td></tr>
-<tr><td><b>ACK/NAK corrompido</b></td><td>O emissor não sabe o que houve; se reenviar às cegas, cria duplicatas. Então: <b>número de sequência</b> em cada pacote; reenviar o último se o ACK/NAK vier com erro; o receptor <b>descarta duplicatas</b>. No pare-e-espere bastam os números 0 e 1</td></tr>
-<tr><td><b>Sem NAK</b></td><td>O receptor manda ACK do <b>último pacote recebido certo</b>, com o número de sequência. ACK duplicado no emissor equivale a um NAK: reenvia</td></tr>
-<tr><td><b>Perda de pacote ou ACK</b></td><td>O emissor espera um tempo razoável e reenvia: precisa de um <b>temporizador</b>. Se o pacote só estava atrasado, a retransmissão vira duplicata, mas o número de sequência resolve</td></tr>
-</table>
-<div class="ex">Você manda um áudio e a pessoa responde “ok”. Se o “ok” não chega, você manda de novo (temporizador). Ela recebe duas vezes o mesmo áudio e percebe pelo número da mensagem que é repetido (sequência), e ignora a cópia.</div>
-
-<h3>6. O problema do pare-e-espere e o paralelismo</h3>
-<p>No pare-e-espere o emissor envia <b>um pacote e espera o ACK</b>. Fica confiável, mas lento.</p>
-<div class="ex">Enlace de 1 Gb/s, retardo de 15 ms em cada sentido e pacote de 1 KB: um pacote sai a cada 30 ms, o que dá só cerca de <b>33 kB/s</b> num enlace de 1 Gb/s. Transmitir o pacote leva apenas uns 8 µs, ou seja, o emissor passa cerca de 0,027% do tempo realmente enviando bits.</div>
-<p>A saída é o <b>paralelismo (pipelining)</b>: enviar <b>vários pacotes em sequência</b> sem esperar cada ACK. Exige ampliar a faixa de números de sequência e ter <b>buffers</b> no emissor e/ou receptor. No exemplo da aula, a utilização sobe por um fator de 3.</p>
-
-<h3>7. TCP</h3>
-<p>Muito mais complexo que o UDP (RFCs 793, 1122, 1323, 2018 e 2581; o UDP tem só a 768). Características:</p>
+<p>Serve para detectar “erros” no segmento transmitido (por exemplo, bits trocados).</p>
 <ul>
-<li><b>Orientado à conexão</b>: antes dos dados há um <b>handshake</b> para definir parâmetros. A conexão é <b>lógica</b>, diferente da comutação de circuitos: sem caminho definido, sem reserva de recursos; só existe <b>nos sistemas finais</b> (os intermediários não guardam estado).</li>
-<li><b>Ponto-a-ponto</b>: um emissor e um receptor.</li>
-<li><b>Full duplex</b>: dados nos dois sentidos na mesma conexão.</li>
-<li><b>MSS</b>: tamanho máximo de segmento.</li>
-<li><b>Controle de fluxo</b>: o emissor não “afoga” o receptor.</li>
-<li><b>Controle de congestionamento</b>: evita saturar os enlaces da rede.</li>
+<li><b>Transmissor</b>: trata o conteúdo do segmento como uma sequência de inteiros de <b>16 bits</b>, com o campo checksum zerado. Soma tudo (adição em <b>complemento de 1</b>) e põe o <b>complemento do valor da soma</b> no campo checksum do cabeçalho.</li>
+<li><b>Receptor</b>: calcula a soma do segmento recebido, incluindo o checksum enviado. Se der <b>FFFF</b>, nenhum erro foi detectado; se não, <b>erro detectado</b>. Mesmo assim ainda pode haver erros (o checksum nem sempre pega tudo).</li>
 </ul>
+<div class="dica">Na soma, o “vai um” do bit mais significativo <b>é somado de volta</b> ao resultado. Exemplo: 1110011001100110 + 1101010101010101 dá um bit a mais; esse bit volta para o fim e o resultado é 1011101110111100, cujo complemento (0100010001000011) é o checksum.</div>
+
+<h3>7. Princípios da transferência confiável de dados</h3>
+<p>É um tema importante nas camadas de transporte, enlace etc., e está na lista dos <b>10 tópicos mais importantes</b> em redes. A <b>complexidade do protocolo</b> depende das características do canal não confiável. Um <b>canal confiável</b> é aquele em que nenhum dado é <b>corrompido</b>, nenhum é <b>perdido</b> e todos chegam em <b>ordem</b>. O protocolo de transferência confiável (por exemplo, o TCP) implementa esse canal sobre um canal que não é.</p>
+<p>As primitivas usadas na descrição: <code>rdt_send()</code> (chamada pela camada de cima, passa os dados para o receptor), <code>udt_send()</code> (envia pacotes pelo canal não confiável), <code>rdt_rcv()</code> (chamada quando um pacote chega ao receptor) e <code>deliver_data()</code> (entrega os dados à camada superior).</p>
+<h4>Canal com erros de bits</h4>
+<ol>
+<li><b>Detectar</b> o erro: soma de verificação (checksum).</li>
+<li><b>Recuperar</b>: o receptor avisa o transmissor. <b>ACK</b> = “recebi corretamente”; <b>NAK</b> = “o pacote veio com erros”, e o transmissor <b>reenvia</b> ao receber um NAK.</li>
+</ol>
+<p>Detecção de erros + <b>mecanismos automáticos de repetição de requisição (ARQ)</b> resolvem esse canal.</p>
+<h4>E se o próprio ACK/NAK for corrompido?</h4>
+<p>O transmissor não sabe o que se passou no receptor, e não pode apenas retransmitir, pois pode gerar <b>pacotes duplicados</b>. A solução:</p>
+<ul>
+<li>o transmissor põe um <b>número de sequência</b> em cada pacote;</li>
+<li>retransmite o último pacote se o ACK/NAK chegar com erro;</li>
+<li>o receptor <b>descarta os duplicados</b> (não os entrega à aplicação) e aguarda a resposta.</li>
+</ul>
+<p>Esse é o protocolo <b>para-e-espera</b> (<i>stop-and-wait</i>): envia um pacote e espera. <b>Dois números de sequência (0 e 1) bastam.</b> O transmissor verifica se o ACK/NAK está corrompido; o receptor verifica se o pacote é duplicado. O receptor <b>não tem como saber</b> se o seu último ACK/NAK foi bem recebido pelo transmissor.</p>
+<p><b>Sem NAK</b>: dá para fazer o mesmo só com ACKs. Em vez de NAK, o receptor manda ACK do <b>último pacote recebido sem erro</b>, com o número de sequência explícito. <b>ACKs duplicados</b> no transmissor têm o mesmo efeito do NAK: retransmitir o pacote atual.</p>
+<h4>Canal com erros e perdas</h4>
+<p>O canal também pode <b>perder</b> pacotes (dados ou ACKs). Checksum, número de sequência, ACKs e retransmissões ajudam, mas <b>não bastam</b>. O transmissor espera um tempo “razoável” pelo ACK e <b>retransmite se nada chegar nesse intervalo</b>. Isso exige um <b>temporizador</b>. Se o pacote (ou o ACK) só estiver atrasado, a retransmissão será duplicada, mas o número de sequência já cuida disso; o receptor deve informar o número de sequência do pacote que está reconhecendo.</p>
+<div class="ex">Você manda uma mensagem e espera a resposta “visto”. Passado um tempo sem resposta, manda de novo. Se a primeira só estava atrasada, o destinatário vê o número da mensagem (“mensagem 7”) e ignora a repetida.</div>
+
+<h3>8. Desempenho e paralelismo (<i>pipelining</i>)</h3>
+<p>O para-e-espera é confiável, mas tem <b>problema de desempenho</b>. A <b>função utilidade</b> mede a fração do tempo em que o emissor está realmente ocupado enviando bits.</p>
+<div class="ex">Enlace de <b>1 Gb/s</b>, retardo de <b>15 ms</b>, pacote de <b>1 KB</b>: um pacote de 1 KB é enviado a cada <b>30 ms</b>, uma vazão de <b>33 kB/s</b> num enlace de 1 Gb/s. O protocolo <b>limita o uso dos recursos físicos</b>.</div>
+<p>A solução é o <b>paralelismo (<i>pipelining</i>)</b>: o transmissor envia <b>vários pacotes em sequência</b>, todos aguardando reconhecimento. Isso exige:</p>
+<ul>
+<li>aumentar a <b>faixa de números de sequência</b>;</li>
+<li><b>armazenamento</b> (buffer) no transmissor e/ou no receptor.</li>
+</ul>
+<p>No exemplo dos slides, enviar três pacotes antes de esperar aumenta a utilização <b>por um fator de 3</b>.</p>
+
+<h3>9. Introdução ao TCP</h3>
+<ul>
+<li>É <b>muito mais complexo</b> que o UDP (RFCs 793, 1122, 1323, 2018 e 2581; o UDP só tem a 768).</li>
+<li><b>Orientado à conexão</b>: antes de transmitir há um <b>handshake</b>, em que os dois processos trocam segmentos para definir parâmetros.</li>
+<li>É uma <b>conexão lógica</b>, diferente da comutação de circuitos: <b>não há caminho definido nem reserva de recursos</b>. Ela “só existe” nos sistemas finais; os elementos intermediários <b>não guardam estado</b>.</li>
+<li><b>Ponto a ponto</b>: um transmissor e um receptor.</li>
+<li><b>Full duplex</b>: fluxo de dados bidirecional na mesma conexão. O <b>MSS</b> é o tamanho máximo de segmento.</li>
+<li><b>Controle de fluxo</b>: o receptor não será “afogado” pelo transmissor.</li>
+<li><b>Controle de congestionamento</b>: evita a saturação dos enlaces da rede.</li>
+</ul>
+<div class="dica">Resumo: UDP = rápido e simples, sem garantias. TCP = conexão, confiabilidade, ordem, controle de fluxo e de congestionamento. Os dois usam <b>portas</b> para entregar ao processo certo.</div>
 `
 },
 
+
 "redes-a1114": {
-  resumo: "Camada de rede: encaminhar × rotear, circuito virtual × datagrama, o que há dentro de um roteador, regra do maior prefixo, o cabeçalho IP campo a campo (TTL, protocolo, checksum) e a fragmentação, com o exercício de 4000 bytes e MTU 1500.",
+  resumo: "A camada de rede: encaminhamento x roteamento, modelos de serviço e melhor esforço, datagramas x circuitos virtuais, como é um roteador por dentro, o cabeçalho IPv4 campo a campo e a fragmentação.",
   html: `
 <h3>1. O que a camada de rede faz</h3>
+<p>Ela é responsável por três coisas:</p>
 <ul>
-<li>Determinar o <b>melhor caminho</b> dos pacotes: função dos <b>protocolos de roteamento</b>.</li>
-<li><b>Encaminhar</b> os pacotes até o destino: função do <b>IP</b>.</li>
-<li><b>Interconectar</b> redes de tecnologias diferentes: função do <b>IP</b>.</li>
+<li><b>determinar o melhor caminho</b> para os pacotes: função dos <b>protocolos de roteamento</b>;</li>
+<li><b>encaminhar</b> os pacotes até o destino: função do <b>protocolo IP</b>;</li>
+<li><b>interconectar redes de tecnologias diferentes</b>: também função do IP.</li>
 </ul>
-<p>Seus protocolos rodam nos sistemas finais <b>e nos roteadores</b>.</p>
+<p>Os protocolos da camada de rede rodam <b>nos sistemas finais e nos roteadores</b>. No lado transmissor, <b>encapsulam os segmentos em datagramas</b>; no lado receptor, entregam os segmentos à camada de transporte. Os <b>roteadores examinam os campos de cabeçalho de todos os datagramas IP</b> que passam por eles.</p>
+<p><b>Transparência sintática</b>: os pacotes vão da origem ao destino <b>sem que a rede modifique os dados</b>; só erros de transmissão os alteram.</p>
+
+<h3>2. Encaminhamento x roteamento</h3>
 <table>
 <tr><th>Encaminhamento</th><th>Roteamento</th></tr>
-<tr><td>mover o pacote de uma <b>entrada</b> do roteador para a <b>saída</b> apropriada</td><td>determinar a <b>rota</b> da origem ao destino</td></tr>
-<tr><td>função do protocolo <b>IP</b></td><td>função dos protocolos de roteamento, que constroem a <b>tabela de encaminhamento</b></td></tr>
+<tr><td>“<b>Mover</b>” um pacote de uma <b>entrada</b> do roteador para a <b>saída apropriada</b>. Usa a <b>tabela de encaminhamento</b>: o valor no cabeçalho do pacote que chega indica a interface de saída.</td><td><b>Determinar a rota</b> que os pacotes seguem da fonte ao destino. É função dos <b>protocolos de roteamento</b>, que <b>constroem a tabela de encaminhamento</b>.</td></tr>
 </table>
-<div class="ex">Roteamento é planejar a viagem no mapa; encaminhamento é, em cada cruzamento, escolher a saída. O plano alimenta as escolhas.</div>
-<p><b>Transparência sintática</b>: os pacotes vão da origem ao destino <b>sem que a rede modifique os dados</b>; só erros de transmissão os alteram.</p>
+<div class="ex">Encaminhar é o carteiro olhar o endereço e escolher a porta de saída. Rotear é quem desenhou antes o mapa de rotas dos carteiros.</div>
 <table>
 <tr><th>Comutadores</th><th>Roteadores</th></tr>
-<tr><td>mais rápidos, mais baratos</td><td>mais lentos, mais caros</td></tr>
-<tr><td>sem endereçamento hierárquico</td><td><b>endereçamento hierárquico</b>: menos entradas na tabela e busca mais rápida</td></tr>
+<tr><td>mais <b>rápidos</b>, <b>menor custo</b>, <b>sem endereçamento hierárquico</b></td><td>mais <b>lentos</b>, <b>maior custo</b>, com <b>endereçamento hierárquico</b>, que <b>reduz o número de entradas</b> na tabela e <b>acelera a busca</b></td></tr>
 </table>
 
-<h3>2. Modelos de serviço e melhor esforço</h3>
-<p>Os <b>modelos de serviço</b> definem como os pacotes são transportados fim-a-fim (entrega garantida, ordenada, banda mínima, jitter máximo, segurança…). Na Internet há <b>só o IP</b>, com <b>um serviço: melhor esforço</b>. (Intserv e Diffserv são extensões dele.)</p>
-<p>No <b>melhor esforço</b> os roteadores fazem o que podem, sem distinção: nós simples e baratos, <b>sem estado na rede</b>; cada pacote é encaminhado <b>independente</b> dos outros; sem reserva de recursos, recuperação de erros ou garantia de acesso; o atraso depende do <b>tamanho da fila</b>; e o pacote é <b>descartado se a fila estiver cheia</b>.</p>
+<h3>3. Modelos de serviço</h3>
+<p>Definem as características do transporte de pacotes <b>fim a fim</b>:</p>
+<ul>
+<li><b>Para pacotes individuais</b>: entrega garantida (o pacote chega ao destino); entrega garantida com <b>atraso limitado</b> (por exemplo, menos de 100 ms).</li>
+<li><b>Para fluxos de pacotes</b>: entrega <b>ordenada</b>; <b>largura de banda mínima</b> garantida; <b><i>jitter</i> máximo</b> garantido; <b>serviços de segurança</b> (com uma chave secreta de sessão, o transmissor poderia cifrar o conteúdo de todos os pacotes ao destinatário).</li>
+</ul>
+<p>Na Internet há <b>um só protocolo, o IP</b>, e <b>um só serviço: o melhor esforço</b>.</p>
+<h4>Melhor esforço</h4>
+<ul>
+<li>Os roteadores <b>se esforçam ao máximo</b> para entregar os pacotes, <b>sem distinção</b>.</li>
+<li>Nós <b>simples e baratos</b>, <b>sem estado na rede</b>; cada pacote é encaminhado de forma independente dos outros.</li>
+<li><b>Sem</b> reserva de recursos, recuperação de erros nem garantia de acesso.</li>
+<li>O atraso depende do <b>tamanho da fila</b>; <b>sem garantia de entrega</b>: o pacote é descartado se a fila estiver cheia.</li>
+</ul>
+<p>Outras arquiteturas (como o ATM, com serviços CBR, VBR, ABR e UBR) ofereciam garantias diferentes de taxa, perdas, ordem e tempo. <b>Intserv e Diffserv</b> são extensões do melhor esforço da Internet.</p>
 
-<h3>3. Circuito virtual × datagrama</h3>
+<h3>4. Datagramas x circuitos virtuais</h3>
+<p>Em uma rede de comutação de pacotes, o serviço da camada de rede pode ser <b>não orientado à conexão</b> (<b>redes de datagramas</b>) ou <b>orientado à conexão</b> (<b>redes de circuitos virtuais</b>). É análogo ao do transporte, mas entre roteadores/sistemas finais, <b>sem escolha</b> (a rede oferece um tipo ou outro) e implementado <b>no núcleo da rede</b>.</p>
+<h4>Datagramas</h4>
+<ul>
+<li>Serviço <b>não confiável</b>, <b>sem estabelecimento prévio de conexão</b>; os roteadores <b>não guardam estado</b> sobre conexões.</li>
+<li>O <b>endereço de destino</b> é colocado no cabeçalho de cada pacote, e os pacotes são encaminhados por ele, em melhor esforço.</li>
+<li>Dois pacotes entre o mesmo par origem-destino <b>podem seguir caminhos diferentes</b>.</li>
+</ul>
+<p><b>Encaminhamento por maior prefixo</b>: o endereço IP tem 32 bits, ou seja, 2<sup>32</sup> (cerca de 4 bilhões) de endereços. Uma entrada na tabela para cada um seria inviável, então se faz <b>agregação de endereços</b>: cada entrada vale para uma faixa, identificada por um prefixo, e vale o <b>prefixo mais longo que casar</b>.</p>
 <table>
-<tr><th></th><th>Circuito virtual</th><th>Datagrama</th></tr>
-<tr><td><b>Conexão</b></td><td>é necessário estabelecer</td><td>não é necessário</td></tr>
-<tr><td><b>Endereçamento</b></td><td>identificador do CV</td><td>endereços de origem e destino</td></tr>
-<tr><td><b>Estado</b></td><td>por conexão</td><td>sem estado</td></tr>
-<tr><td><b>Roteamento</b></td><td>rota escolhida na conexão e seguida depois</td><td>cada pacote “independente”</td></tr>
-<tr><td><b>Falha de roteadores</b></td><td>todos os circuitos que passam por ele caem</td><td>perda de pacotes durante a falha</td></tr>
-<tr><td><b>Qualidade de serviço e congestionamento</b></td><td>mais fáceis</td><td>difíceis</td></tr>
-</table>
-<p><b>Rede de datagramas</b> (a Internet): serviço não confiável e sem conexão; roteadores não guardam estado; encaminha-se pelo <b>endereço de destino</b>; dois pacotes do mesmo par origem-destino <b>podem seguir caminhos diferentes</b>.</p>
-<p><b>Circuito virtual</b>: um caminho, números de CV (<b>um por enlace</b>, trocados a cada salto pela tabela) e entradas nas tabelas de cada roteador. Os pacotes carregam o número do CV em vez dos endereços; cada roteador guarda estado por conexão e pode reservar banda e buffers. <b>Protocolos de sinalização</b> estabelecem, mantêm e encerram o CV (ATM, frame-relay, X.25), mas <b>não são usados na Internet convencional</b>.</p>
-
-<h3>4. Regra do maior prefixo</h3>
-<p>Um IP tem 32 bits: cerca de 4 bilhões de endereços, o que tornaria inviável uma entrada por endereço. Faz-se <b>agregação por prefixos</b> e escolhe-se a entrada <b>com o prefixo mais longo que casa</b> com o destino.</p>
-<table>
-<tr><th>Prefixo</th><th>Interface</th></tr>
+<tr><th>Prefixo</th><th>Interface de saída</th></tr>
 <tr><td>11001000.00010111.00010</td><td>0</td></tr>
 <tr><td>11001000.00010111.00011000</td><td>1</td></tr>
 <tr><td>11001000.00010111.00011</td><td>2</td></tr>
 <tr><td>caso contrário</td><td>3</td></tr>
 </table>
-<p>Um destino que começa com <code>11001000.00010111.00011000</code> casa com as linhas 2 e 3 da tabela; vale a <b>mais longa</b> (a de 24 bits), então vai pela <b>interface 1</b>. Um destino com <code>11001000.00010111.00010110…</code> vai pela interface 0.</p>
-<div class="ex">Como endereço de rua: “Brasil” casa com todo endereço do país, “Brasil, Niterói” é mais específico. Entre as duas regras, vale a mais específica.</div>
-
-<h3>5. Dentro do roteador</h3>
-<p>O roteador decide o caminho (de forma distribuída), encaminha e interconecta redes. Ao chegar um pacote, olha-se o destino: se for o de uma de suas interfaces, é processado; senão, é encaminhado.</p>
-<p><b>Porta de entrada</b>: recebe os bits (física), trata o enlace (ex.: Ethernet) e faz a <b>comutação descentralizada</b>: procura a porta de saída na tabela que está na própria porta. A meta é trabalhar na <b>velocidade da linha</b>; se os datagramas chegam mais rápido, formam-se filas.</p>
+<div class="ex">Endereço de destino <b>11001000 00010111 00010110 10100001</b>: começa com 11001000.00010111.00010, então vai pela <b>interface 0</b>. Endereço <b>11001000 00010111 00011000 10101010</b>: casa com .00011 e também com o prefixo mais longo .00011000, então vai pela <b>interface 1</b>.</div>
+<h4>Circuitos virtuais (CV)</h4>
+<p>Emulam uma rede de comutação de circuitos: o caminho se comporta como um circuito telefônico em desempenho e nas ações da rede. Funcionamento:</p>
+<ol>
+<li><b>estabelecimento de uma chamada</b> antes do envio de dados;</li>
+<li>definição de <b>um caminho</b> seguido por todos os pacotes;</li>
+<li>cada pacote carrega a <b>identificação do CV</b> (e não endereços de origem e destino);</li>
+<li>cada roteador do caminho <b>mantém estado</b> de cada conexão que o atravessa, e pode <b>alocar recursos</b> (banda, buffers) ao CV.</li>
+</ol>
+<p>Um CV consiste de: o <b>caminho</b>; <b>números de CV</b>, um por enlace ao longo do caminho (menor complexidade de gerenciamento); e <b>entradas nas tabelas de repasse</b> dos roteadores. O <b>número do CV é trocado a cada enlace</b>, e o novo número vem da tabela de encaminhamento.</p>
+<div class="ex">Tabela do roteador R1: pacote que chega pela interface 1 com CV 12 sai pela interface 3 com CV 22; chega pela 2 com CV 63, sai pela 1 com CV 18; e assim por diante. Isso é “informação de estado da conexão”.</div>
+<p><b>Protocolos de sinalização</b> estabelecem, mantêm e destroem um CV. São usados em <b>ATM, frame-relay e X.25</b> e <b>não são usados na Internet convencional</b>. A sequência: 1) a origem inicia a chamada; 2) chega a chamada ao destino; 3) a chamada é aceita; 4) a conexão é completada; 5) começa o fluxo de dados; 6) os dados são recebidos.</p>
 <table>
-<tr><th>Técnica de comutação</th><th>Como é</th><th>Limite</th></tr>
-<tr><td><b>Por memória</b> (1ª geração)</td><td>o processador copia o pacote</td><td>banda da memória; duas travessias do barramento por datagrama</td></tr>
-<tr><td><b>Por barramento</b></td><td>da porta de entrada à de saída por um barramento compartilhado</td><td>disputa pelo barramento</td></tr>
-<tr><td><b>Por crossbar</b></td><td>reduz a disputa; 2n barramentos ligam n entradas a n saídas</td><td>—</td></tr>
+<tr><th>Característica</th><th>Circuito virtual</th><th>Datagrama</th></tr>
+<tr><td>Estabelecimento de conexão</td><td>necessário</td><td>não necessário</td></tr>
+<tr><td>Endereçamento</td><td>identificador do CV</td><td>endereços de fonte e destino</td></tr>
+<tr><td>Estado</td><td>por conexão</td><td>sem estado</td></tr>
+<tr><td>Roteamento</td><td>rota escolhida na conexão e seguida depois</td><td>cada pacote é “independente”</td></tr>
+<tr><td>Falha de roteadores</td><td>todos os circuitos que passam por ele são encerrados</td><td>perda de pacotes durante a falha</td></tr>
+<tr><td>Qualidade de serviço</td><td>mais fácil</td><td>difícil</td></tr>
+<tr><td>Controle de congestionamento</td><td>mais fácil</td><td>difícil</td></tr>
 </table>
+
+<h3>5. Dentro de um roteador</h3>
+<p>O roteador determina o caminho entre origem e destino (ação distribuída), <b>encaminha</b> pacotes e <b>interconecta redes distintas</b>. A cada pacote que chega, o endereço de destino é analisado: se for <b>igual ao de uma das interfaces do roteador</b>, o pacote é <b>processado</b> ali; caso contrário, é <b>encaminhado</b> a outro roteador pela interface mais indicada.</p>
+<h4>Portas de entrada</h4>
 <ul>
-<li><b>Filas na saída</b>: acontecem quando a taxa de chegada pelo comutador excede a de transmissão de saída; geram <b>atraso e perdas</b> por estouro do buffer. Um escalonador escolhe qual datagrama enviar.</li>
-<li><b>Filas na entrada</b>: se o comutador é mais lento que a soma das entradas. Surge o <b>bloqueio de cabeça de fila (HOL)</b>: o datagrama na frente impede os de trás de avançar.</li>
+<li>Camada física (recepção de bits) e camada de enlace (por exemplo, Ethernet).</li>
+<li><b>Comutação descentralizada</b>: dado o destino do datagrama, procura a porta de saída na <b>tabela de rotas guardada na memória da porta de entrada</b>.</li>
+<li>Meta: completar o processamento na “<b>velocidade da linha</b>”. Se os datagramas chegam mais rápido que a taxa de envio à matriz de comutação, formam-se <b>filas</b>.</li>
+</ul>
+<h4>Três técnicas de comutação</h4>
+<table>
+<tr><th>Técnica</th><th>Como é</th><th>Limite</th></tr>
+<tr><td><b>Por memória</b></td><td>roteadores da primeira geração; o pacote é copiado pelo processador (único) do sistema</td><td>velocidade limitada pela <b>largura de banda da memória</b>; duas travessias do barramento por datagrama</td></tr>
+<tr><td><b>Por barramento</b></td><td>o datagrama vai da memória da porta de entrada à da porta de saída por um <b>barramento compartilhado</b></td><td><b>disputa (contenção)</b> pelo barramento; taxa limitada pela largura de banda do barramento</td></tr>
+<tr><td><b>Por crossbar</b></td><td>interconecta n portas de entrada a n de saída com <b>2n barramentos</b></td><td>reduz a disputa, que passa a ser “por porta de saída”</td></tr>
+</table>
+<h4>Portas de saída e filas</h4>
+<ul>
+<li>As <b>filas</b> são necessárias quando os datagramas chegam do elemento de comutação mais rápido que a taxa de transmissão. Um <b>escalonador de pacotes</b> escolhe qual datagrama enfileirado será transmitido.</li>
+<li><b>Fila na saída</b>: usa buffers quando a taxa de chegada pelo comutador excede a de transmissão de saída. Gera <b>retardo</b> e <b>perdas por transbordo</b> do buffer de saída.</li>
+<li><b>Fila na entrada</b>: se o elemento de comutação for mais lento que a soma das portas de entrada. Há o <b>bloqueio de cabeça de fila</b>: o datagrama na frente impede os outros da mesma fila de avançarem. Também gera retardo e perdas por transbordo.</li>
+</ul>
+<div class="ex">Caixa de supermercado: a fila anda na velocidade do caixa. O “bloqueio de cabeça de fila” é o cliente da frente com carrinho cheio travando quem só tem uma coisa na mão.</div>
+
+<h3>6. IP (<i>Internet Protocol</i>)</h3>
+<p>Definido na <b>RFC 791</b>. É responsável pelo <b>encaminhamento de pacotes</b> (<b>não</b> pelo roteamento!) e pelo <b>endereçamento e identificação</b> de estações e roteadores (a semântica do endereço fica “sobrecarregada”). Na transmissão de um pacote por redes diferentes, o <b>cabeçalho IP permanece (origem A, destino B)</b> enquanto o cabeçalho de enlace (por exemplo, Ethernet) muda a cada rede.</p>
+<h3>7. Cabeçalho IPv4</h3>
+<p>Todos os campos têm <b>tamanho fixo</b>, exceto o de <b>opções</b>.</p>
+<table>
+<tr><th>Campo</th><th>Tamanho</th><th>O que é</th></tr>
+<tr><td><b>Versão</b></td><td>4 bits</td><td>a atual é <b>4</b>; versão 5 = protocolo ST-2; versão 6 = “a próxima geração”; existem também versões 7 e 8</td></tr>
+<tr><td><b>IHL</b> (comprimento do cabeçalho)</td><td>4 bits</td><td>em palavras de 32 bits; vai de <b>5</b> (sem opções) a <b>15</b>, ou seja, no máximo <b>40 bytes de opções</b></td></tr>
+<tr><td><b>Tipo de serviço</b></td><td>8 bits</td><td>define a precedência e o tipo de roteamento desejado (usado para QoS); veja abaixo</td></tr>
+<tr><td><b>Comprimento total</b></td><td>16 bits</td><td>do pacote, <b>incluindo o cabeçalho</b>; limita o pacote a <b>65.535 bytes</b></td></tr>
+<tr><td><b>Identification</b>, <b>Flags</b>, <b>Fragment offset</b></td><td>16, 3 e 13 bits</td><td>usados na fragmentação (seção 8)</td></tr>
+<tr><td><b>TTL</b> (tempo de vida)</td><td>8 bits</td><td>tempo máximo de vida do pacote na rede; veja abaixo</td></tr>
+<tr><td><b>Protocol</b></td><td>8 bits</td><td>o programa para o qual o pacote é passado no destino</td></tr>
+<tr><td><b>Header checksum</b></td><td>16 bits</td><td>proteção do <b>cabeçalho</b> contra erros</td></tr>
+<tr><td><b>Endereços de origem e de destino</b></td><td>32 bits cada</td><td>identificam a fonte e o destino do pacote</td></tr>
+</table>
+<h4>Tipo de serviço</h4>
+<ul>
+<li><b>Precedence</b> (3 bits): a <b>prioridade</b> do pacote nas filas; valor maior = maior prioridade. A RFC 791 diz que só vale <b>dentro de uma rede</b>, o que evita abuso por usuários mal-intencionados.</li>
+<li><b>Type of Service</b> (5 bits): útil quando há <b>várias rotas</b>; indica a rota com o melhor <b>D</b> (<i>delay</i>), <b>T</b> (<i>throughput</i>), <b>R</b> (<i>reliability</i>) ou <b>C</b> (<i>cost</i>). <b>Nunca se usa mais de um</b> ao mesmo tempo: é combinação ilegal.</li>
+</ul>
+<h4>TTL (<i>Time to Live</i>)</h4>
+<ul>
+<li>É o tempo máximo de vida do pacote na rede, em segundos. Um dos objetivos era saber que, depois do TTL máximo, <b>nenhum outro pacote daquela comunicação</b> ainda estaria em trânsito, evitando misturar pacotes de fluxos diferentes.</li>
+<li>A RFC 791 diz que o roteador deve <b>sempre decrementar</b> o TTL antes de retransmitir: de 1, se o tempo gasto na fila e na transmissão for menor que 1 segundo, ou do número de segundos estimado.</li>
+<li>Na prática, estimar esse tempo é difícil e o enlace dificilmente passa de 1 s, então a <b>maioria dos roteadores decrementa 1</b> por salto. Segundo os slides, se o TTL atinge o valor 1, o pacote deve ser <b>descartado</b>: sinal de que trafegou mais tempo que o devido. <b>Valor padrão: 64</b>.</li>
+</ul>
+<h4>Protocol</h4>
+<table>
+<tr><th>Número</th><th>Protocolo</th><th>Número</th><th>Protocolo</th></tr>
+<tr><td>0</td><td>reservado</td><td>17</td><td><b>UDP</b></td></tr>
+<tr><td>1</td><td><b>ICMP</b></td><td>29</td><td>ISO-TP4</td></tr>
+<tr><td>2</td><td>IGMP</td><td>80</td><td>ISO-IP (CLNP)</td></tr>
+<tr><td>4</td><td>IP em IP (encapsulação)</td><td>89</td><td><b>OSPF</b></td></tr>
+<tr><td>6</td><td><b>TCP</b></td><td>255</td><td>reservado</td></tr>
+</table>
+<h4>Header checksum</h4>
+<ul>
+<li>Calculado como o <b>complemento a 1 da soma, em complemento a 1, de todas as palavras de 16 bits</b> do cabeçalho (com os bits do checksum em 0 e incluindo as opções).</li>
+<li>Compromisso: <b>não protege</b> contra inserção de palavras zeradas nem contra inversão de palavras, mas é <b>simples de implementar</b>.</li>
+<li>É <b>calculado a cada salto</b>: se a verificação falha, o pacote é <b>descartado</b>; se passa, o checksum é <b>recalculado</b> (porque o TTL foi decrementado).</li>
 </ul>
 
-<h3>6. O protocolo IP e seu cabeçalho</h3>
-<p>RFC 791. É responsável pelo <b>encaminhamento</b> (não pelo roteamento!) e pelo <b>endereçamento</b> de estações e roteadores (o endereço diz quem e onde: semântica sobrecarregada). Todos os campos do cabeçalho têm tamanho fixo, exceto as opções.</p>
-<table>
-<tr><th>Campo</th><th>O que é</th></tr>
-<tr><td><b>Versão</b> (4 bits)</td><td>4 é a atual; 5 era o ST-2; 6, “a próxima geração”</td></tr>
-<tr><td><b>IHL</b> (4 bits)</td><td>tamanho do cabeçalho em palavras de 32 bits: de 5 (sem opções) a 15, ou seja, até 40 bytes de opções</td></tr>
-<tr><td><b>Comprimento total</b> (16 bits)</td><td>pacote inteiro; limita-o a 65.535 bytes</td></tr>
-<tr><td><b>Tipo de serviço</b> (8 bits)</td><td>usado para QoS: <b>Precedence</b> (3 bits) é a prioridade na fila, válida só dentro de uma rede; <b>Type of Service</b> (5 bits) indica a rota com melhor D (atraso), T (vazão), R (confiabilidade) ou C (custo), sem usar mais de um ao mesmo tempo</td></tr>
-<tr><td><b>TTL</b> (8 bits)</td><td>tempo de vida máximo (padrão 64). Cada roteador decrementa; na prática, de 1 por salto. Quando chega ao fim, o pacote é <b>descartado</b></td></tr>
-<tr><td><b>Protocol</b> (8 bits)</td><td>a quem entregar o pacote no destino: 1 ICMP · 2 IGMP · 4 IP em IP · <b>6 TCP</b> · <b>17 UDP</b> · 29 ISO-TP4 · 80 ISO-IP · 89 OSPF</td></tr>
-<tr><td><b>Header Checksum</b> (16 bits)</td><td>protege <b>só o cabeçalho</b> (complemento de 1 da soma em complemento de 1 das palavras de 16 bits)</td></tr>
-</table>
-<p>O checksum é simples, mas não protege contra inserção de palavras zeradas ou inversão de palavras. Ele é <b>recalculado a cada salto</b>: se a verificação falha, o pacote é descartado; se passa, recalcula-se, porque o TTL mudou.</p>
-
-<h3>7. Fragmentação</h3>
-<p>Um roteador liga redes diferentes, e cada tecnologia tem um tamanho máximo de pacote, a <b>MTU</b>. Um datagrama grande é <b>fragmentado</b> dentro da rede e <b>remontado só no destino final</b> (mais um caso de complexidade nas bordas).</p>
+<h3>8. Fragmentação e remontagem</h3>
+<p>A fragmentação é necessária quando um roteador conecta <b>duas tecnologias de rede diferentes</b>, cada uma com um <b>tamanho máximo de pacote</b>. Exemplo: rede com muita perda pede pacotes pequenos; rede com pouca perda aceita pacotes grandes. Cada tipo de enlace tem sua <b>MTU</b> (<i>maximum transmission unit</i>: o maior quadro possível naquele enlace).</p>
+<p>Um datagrama IP grande demais é <b>dividido</b> (um datagrama vira vários) e só é <b>remontado no destino final</b>. Os bits do cabeçalho IP servem para identificar e ordenar os fragmentos.</p>
 <table>
 <tr><th>Campo</th><th>Função</th></tr>
-<tr><td><b>Identification</b> (16 bits)</td><td>com o endereço de origem, diz a qual pacote o fragmento pertence</td></tr>
-<tr><td><b>Fragment Offset</b> (13 bits)</td><td>posição do fragmento, em <b>palavras de 8 bytes</b></td></tr>
-<tr><td><b>Flags</b> (3 bits)</td><td>bit 0 reservado; bit 1 <b>DF</b> (don’t fragment); bit 2 <b>MF</b> (more fragments)</td></tr>
+<tr><td><b>Identification</b> (16 bits)</td><td>junto com o endereço de origem, diz a qual pacote o fragmento pertence</td></tr>
+<tr><td><b>Fragment offset</b> (13 bits)</td><td>posição do fragmento no pacote, em <b>palavras de 8 bytes</b></td></tr>
+<tr><td><b>Flags</b> (3 bits)</td><td>bit 0 reservado; bit 1 <b>DF</b> (<i>don’t fragment</i>: o pacote não pode ser fragmentado); bit 2 <b>MF</b> (<i>more fragments</i>: ainda há fragmentos a receber)</td></tr>
 </table>
-<p>O bit <b>MF é 1 em todos os fragmentos, exceto no último</b>. Cada fragmento tem um cabeçalho completo, igual ao original, exceto comprimento, offset e MF.</p>
-<h4>Exercício clássico: 4000 bytes, MTU de 1500</h4>
-<p>O cabeçalho tem 20 bytes, então sobram 3980 bytes de dados. Cada fragmento leva no máximo <b>1480 bytes de dados</b> (múltiplo de 8).</p>
-<table>
-<tr><th>Fragmento</th><th>Dados</th><th>Comprimento total</th><th>Offset</th><th>MF</th></tr>
-<tr><td>1</td><td>1480</td><td>1500</td><td>0</td><td>1</td></tr>
-<tr><td>2</td><td>1480</td><td>1500</td><td>1480 / 8 = 185</td><td>1</td></tr>
-<tr><td>3</td><td>1020</td><td>1040</td><td>2960 / 8 = 370</td><td>0</td></tr>
-</table>
-<p>Todos com o mesmo Identification. Quem remonta precisa “expirar” os pacotes parcialmente remontados após um tempo de espera.</p>
-<div class="dica">A fragmentação é <b>ineficiente</b>: com TCP, perder um fragmento obriga a retransmitir o pacote inteiro, e os roteadores gastam memória guardando fragmentos. Para evitá-la, o TCP faz a <b>descoberta da MTU do caminho</b> (Path MTU Discovery): tenta tamanhos diferentes com <b>DF = 1</b> e usa o maior que passar.</div>
+<p>Cada fragmento tem um <b>cabeçalho completo</b>, igual ao do pacote original, exceto os campos de <b>comprimento</b>, <b>offset</b> e o bit <b>MF</b>.</p>
+<div class="ex">Datagrama de <b>4000 bytes</b> e <b>MTU = 1500 bytes</b>. Descontando 20 bytes de cabeçalho, são <b>3980 bytes de dados</b>. Cada fragmento leva no máximo 1500 − 20 = <b>1480 bytes de dados</b>: o primeiro com offset 0 (MF = 1), o segundo com offset 1480/8 = <b>185</b> (MF = 1) e o terceiro com offset 370 e os 1020 bytes restantes (MF = 0). <b>O bit MF é sempre 1, exceto no último fragmento.</b></div>
+<ul>
+<li>Em caso de <b>nova fragmentação</b>, MF e offset são calculados em relação ao pacote <b>original</b>.</li>
+<li>A remontagem só no destino é mais um exemplo de <b>complexidade apenas nas bordas</b>. O receptor deve <b>expirar</b> pacotes parcialmente remontados após certo tempo de espera (por exemplo, decrementando o TTL a cada segundo).</li>
+<li>A fragmentação é <b>ineficiente com o TCP</b>: perder um fragmento implica <b>retransmitir o pacote inteiro</b>. Além disso, a <b>memória dos roteadores</b> pode ser desperdiçada guardando fragmentos antes de retransmiti-los.</li>
+</ul>
+<h4>Como evitar a fragmentação</h4>
+<p>O TCP tem um mecanismo de <b>descoberta da MTU do caminho</b>: tenta diferentes tamanhos de pacote com o campo <b>DF = 1</b> e adota como MTU o <b>maior tamanho entregue</b>.</p>
+<div class="dica">Roteamento = descobrir caminhos (tabela). Encaminhamento = usar a tabela, pacote a pacote. IP encaminha e endereça, mas <b>não roteia</b>; o roteamento é feito por outros protocolos.</div>
 `
 },
+
 
 "redes-a15": {
-  resumo: "Roteamento: o que a tabela guarda, vetores de distância e a equação de Bellman-Ford (com exemplo calculado), a divisão da Internet em sistemas autônomos, IGP × EGP e os problemas do algoritmo (bouncing, contagem até o infinito) com split horizon.",
+  resumo: "Por que existe roteamento, o grafo de custos, os sistemas autônomos e os dois níveis de roteamento, o algoritmo de vetores de distância (Bellman-Ford) e seus problemas: bouncing effect, contagem até o infinito, split horizon.",
   html: `
-<h3>1. Por que precisamos de roteamento</h3>
-<p>Uma rede conectada já permitiria a comunicação por <b>inundação</b>: cada nó repete a mensagem a todos os vizinhos até chegar ao destino. Mas isso não é eficiente nem escalável. O roteamento leva os dados ao destino de forma eficiente, pelo caminho <b>ótimo ou quase ótimo</b>.</p>
-<p>O objetivo é achar o <b>caminho mais curto</b> entre qualquer par de nós. A <b>tabela de roteamento</b> tem, em cada entrada: <b>destino</b>, <b>próximo salto</b> e <b>métrica/custo</b>.</p>
+<h3>1. Para que serve o roteamento</h3>
+<p>Lembrando: a camada de rede determina o melhor caminho (<b>protocolos de roteamento</b>), encaminha os pacotes (<b>IP</b>) e interconecta redes diferentes (<b>IP</b>). O <b>protocolo de roteamento é quem constrói a tabela de encaminhamento</b>; o roteador usa o valor no cabeçalho do pacote para consultar essa tabela e escolher a interface de saída.</p>
+<p>Uma rede conectada já basta para dois nós se comunicarem? Sim, por <b>inundação</b>: todos os nós enviam mensagens a todos os vizinhos até o destino ser alcançado. Mas isso <b>não é eficiente nem escalável</b>. O roteamento encaminha os dados ao destino <b>de maneira eficiente</b>: os protocolos encontram o caminho <b>ótimo (ou quase ótimo)</b>.</p>
+<div class="ex">Procurar uma pessoa gritando o nome dela em todas as ruas da cidade (inundação) funciona, mas é um desperdício. Roteamento é perguntar o caminho certo.</div>
+
+<h3>2. Algoritmos de roteamento</h3>
+<p>Objetivo: descobrir o <b>caminho mais curto</b> (<i>shortest path</i>, SP) entre qualquer par de nós. Cada entrada da <b>tabela de roteamento</b> tem: o <b>destino</b> da rota, o <b>próximo salto</b> e a <b>métrica/custo</b>. Há duas famílias:</p>
 <table>
-<tr><th>Tipo de protocolo</th><th>Algoritmo</th></tr>
-<tr><td><b>Vetores de Distância</b> (Distance Vector, DV)</td><td>Bellman-Ford</td></tr>
-<tr><td><b>Estado do Enlace</b> (Link State, LS)</td><td>Dijkstra</td></tr>
+<tr><th>Família</th><th>Algoritmo</th></tr>
+<tr><td><b>Vetores de distância</b> (<i>Distance Vector</i>, DV)</td><td>Bellman-Ford</td></tr>
+<tr><td><b>Estado do enlace</b> (<i>Link State</i>, LS)</td><td>Dijkstra</td></tr>
 </table>
-<p>Nesta aula o detalhe é o de vetores de distância; o de estado do enlace foi só apresentado.</p>
+<p>Nesta aula, o foco é o <b>DV</b>.</p>
+<h4>Abstração com grafos</h4>
+<p>A rede vira um <b>grafo G = (N, E)</b>: N é o conjunto de roteadores (no exemplo: u, v, w, x, y, z) e E é o conjunto de enlaces, como (u,v), (u,x), (u,w), (v,x), (v,w), (x,w), (x,y), (w,y), (w,z), (y,z). Cada enlace tem um <b>custo</b> c(x, x′) (por exemplo, c(w,z) = 5). O custo pode ser 1, ou inversamente relacionado à banda. O <b>custo de um caminho</b> é a <b>soma</b> dos custos de seus enlaces: c(x<sub>1</sub>,x<sub>2</sub>) + c(x<sub>2</sub>,x<sub>3</sub>) + … + c(x<sub>p−1</sub>,x<sub>p</sub>).</p>
 
-<h3>2. A rede como grafo</h3>
-<p>G = (N, E): N são os roteadores e E os enlaces. O custo do enlace <b>c(x, x’)</b> pode ser 1 (contagem de saltos) ou inversamente relacionado à banda. O custo de um caminho é a <b>soma</b> dos custos dos seus enlaces.</p>
-
-<h3>3. Equação de Bellman-Ford</h3>
-<pre>dx(y) = min  { c(x,v) + dv(y) }
-         v</pre>
-<p>O custo do menor caminho de x até y é o <b>mínimo, entre todos os vizinhos v de x</b>, de “custo até o vizinho + custo do vizinho até y”. O vizinho que dá o mínimo é o <b>próximo salto</b>, e isso gera a tabela de encaminhamento.</p>
-<div class="ex">Dados: dv(z) = 5, dx(z) = 3, dw(z) = 3, c(u,v) = 2, c(u,x) = 1, c(u,w) = 5. Qual o custo de u até z?<br>du(z) = min { 2+5, 1+3, 5+3 } = min { 7, 4, 8 } = <b>4</b>, pelo vizinho <b>x</b> (o próximo salto de u para z).<br>Em linguagem de gente: é como escolher o amigo cujo “custo para chegar até ele mais o que ele diz que falta” seja o menor.</div>
-
-<h3>4. Vetores de distância na prática</h3>
-<p>Cada nó x mantém: <b>Dx(y)</b>, a estimativa do menor custo até cada destino y (seu <b>vetor de distâncias</b>); o <b>custo para cada vizinho</b> c(x,v); e os <b>vetores dos vizinhos</b> Dv. Cada nó envia periodicamente seu vetor aos vizinhos e, ao receber um novo, atualiza o seu pela equação de B-F. Sob condições mínimas e naturais, as estimativas <b>convergem</b> para o menor custo real.</p>
+<h3>3. Sistemas autônomos</h3>
+<p>Até aqui se supôs uma rede <b>homogênea</b>: todos os roteadores têm a mesma função e rodam os mesmos algoritmos. Isso é escalável? É gerenciável? <b>Não.</b></p>
+<p>Em 1980, a Internet era a Arpanet mais enlaces de satélite (Satnet): <b>uma única rede</b>, rodando o GGP. Ela cresceu rapidamente, e surgiram problemas:</p>
 <ul>
-<li><b>Iterativo e assíncrono</b>: cada passo local é causado por uma mudança no custo de um enlace local ou por uma mensagem de vizinho avisando que mudou um caminho.</li>
-<li><b>Distribuído</b>: cada nó só avisa os vizinhos quando muda o <b>seu</b> caminho de menor custo para algum destino.</li>
+<li>mais complexidade de gerenciamento e administração;</li>
+<li>atualizações de topologia mais frequentes;</li>
+<li>diferentes implementações do GGP, o que dificultava implantar novas versões.</li>
 </ul>
-<p>Ciclo de cada nó: <b>espera → recalcula a tabela → se mudou, avisa os vizinhos</b>. Complexidade O(nm), com n nós e m arestas.</p>
-
-<h3>5. Sistemas Autônomos (AS)</h3>
-<p>Em 1980 a Internet era <b>uma rede só</b> (Arpanet + Satnet, rodando o GGP). Com o crescimento veio o problema de escala: gerenciamento complexo, atualizações de topologia frequentes, implementações diferentes do GGP dificultando versões novas, impossibilidade de guardar todos os destinos numa tabela e troca de tabelas sobrecarregando os enlaces.</p>
-<p>A solução: dividir a Internet em <b>Sistemas Autônomos</b>, conjuntos de roteadores e redes <b>sob a mesma administração</b>. Não há limites rígidos: pode ser um roteador ligado à Internet, uma rede corporativa com várias LANs, os clientes de um ISP… Cada AS tem um <b>número de 16 bits</b> atribuído pelas autoridades de numeração (ICANN etc.). A Internet passa a ser um <b>conjunto de ASes</b>.</p>
-<table>
-<tr><th>Intradomínio</th><th>Interdomínio</th></tr>
-<tr><td><b>dentro</b> de um AS</td><td><b>entre</b> ASes</td></tr>
-<tr><td><b>IGP</b> (Interior Gateway Protocol): RIP, OSPF, IGRP, IS-IS</td><td><b>EGP</b> (Exterior Gateway Protocol): GGP, EGP, <b>BGP</b></td></tr>
-<tr><td>objetivo: <b>desempenho</b></td><td>objetivo: <b>política</b></td></tr>
-</table>
-<div class="dica">A conectividade global tem de se manter: as entradas de roteamento de cada AS precisam cobrir <b>todos os destinos da Internet</b>.</div>
-
-<h3>6. Quando algo quebra: bouncing e contagem até o infinito</h3>
-<p>O DV tem um ponto fraco: <b>notícia ruim viaja devagar</b>.</p>
+<p>É um <b>problema de escala</b>: é impossível guardar todos os destinos na tabela de rotas, e trocar tabelas de rotas <b>sobrecarrega os enlaces</b>. A solução foi dividir a Internet em <b>Sistemas Autônomos</b> (<b>AS</b>, <i>Autonomous System</i>). A Internet passou a ser um conjunto de ASes: uma “rede de redes”.</p>
 <ul>
-<li><b>Bouncing effect</b>: quando um enlace falha, os nós ainda propagam <b>rotas antigas</b>. A cada rodada de troca de vetores, eles aumentam a métrica até o destino inalcançável (de 2 em 2, no exemplo) e “quicam” entre si até o algoritmo finalmente convergir. Resultado: <b>convergência lenta</b>.</li>
-<li><b>Contagem até o infinito</b>: se a falha separa a rede em duas partes, pode se formar um <b>loop</b>. Se D gerar o vetor antes de A, A percebe que tudo, exceto D, ficou inalcançável e converge. Se A enviar primeiro, D atualiza com uma rota que passa por A, que por sua vez passa por D: <b>loop entre A e D</b>. A contagem sobe sem parar, porque os nós do outro lado estão isolados. Resultado: convergência muito lenta.</li>
+<li>Um AS é um <b>conjunto de roteadores e redes sob a mesma administração</b>.</li>
+<li>Não há limites rígidos: pode ser <b>1 roteador</b> ligado à Internet, uma <b>rede corporativa</b> que une várias LANs por um backbone, ou o <b>conjunto de clientes de um ISP</b>.</li>
+<li>Cada AS tem um <b>número de AS de 16 bits</b>, escrito em decimal e atribuído pelas autoridades de numeração da Internet (ICANN etc.).</li>
 </ul>
-<div class="ex">Dois vizinhos que, depois de uma queda, ficam passando a bola um ao outro: “eu chego lá passando por você” / “eu chego lá passando por você”. Cada volta soma mais um ao custo, mas ninguém chega a lugar nenhum.</div>
-
-<h3>7. As melhorias: split horizon e triggered updates</h3>
-<p>Duas melhorias atacam esses dois problemas: <b>split horizon</b> e <b>triggered updates</b> (atualizações disparadas por <b>evento</b>, e não só periódicas).</p>
-<p><b>Split horizon</b>: se A usa B para chegar a X, não faz sentido B usar A para chegar a X; logo A <b>não deve anunciar a B</b> a rota para X. Cada nó envia vetores <b>diferentes</b> conforme o enlace de saída: as rotas que saem por E <b>não são anunciadas por E</b>. No exemplo, “A envia o DV para D somente com A = 0”, e o loop não se forma.</p>
+<h4>Dois níveis de roteamento</h4>
+<p>Dividir em ASes dá a cada rede um número menor de roteadores para administrar, <b>mas a conectividade global precisa continuar</b>: as entradas de roteamento de cada AS devem cobrir todos os destinos da Internet.</p>
 <table>
-<tr><th>Split horizon simples</th><th>Poisonous reverse</th></tr>
-<tr><td>os nós <b>omitem</b> do vetor os destinos alcançados pelo enlace em que ele é enviado</td><td>os nós <b>incluem</b> esses destinos, mas com <b>distância infinita</b></td></tr>
+<tr><th></th><th>Intradomínio</th><th>Interdomínio</th></tr>
+<tr><td><b>Onde</b></td><td><b>dentro</b> de um AS</td><td><b>entre</b> ASes</td></tr>
+<tr><td><b>Protocolo</b></td><td><b>IGP</b> (<i>Interior Gateway Protocol</i>): RIP, OSPF, IGRP, IS-IS…</td><td><b>EGP</b> (<i>Exterior Gateway Protocol</i>): GGP, EGP, BGP…</td></tr>
+<tr><td><b>Objetivo</b></td><td><b>desempenho</b></td><td><b>política</b></td></tr>
 </table>
-<div class="dica">Limitação: o mecanismo evita loops de <b>dois saltos</b>, mas não todos. Por exemplo, se um vetor enviado por E chega a B mas não chega a C por erro de transmissão, só B atualiza a tabela e o loop pode se formar.</div>
+<div class="dica">Dentro de casa, escolhe-se o caminho mais curto (desempenho). Entre empresas diferentes, as regras de quem passa por onde contam mais (política).</div>
+
+<h3>4. Vetores de distância e a equação de Bellman-Ford</h3>
+<p>Seja d<sub>x</sub>(y) o <b>custo do caminho de menor custo</b> entre x e y. A equação de Bellman-Ford diz:</p>
+<p><b>d<sub>x</sub>(y) = min<sub>v</sub> { c(x,v) + d<sub>v</sub>(y) }</b>, onde o mínimo é tomado entre <b>todos os vizinhos v</b> de x.</p>
+<div class="ex">No grafo dos slides, sabe-se que d<sub>v</sub>(z) = 5, d<sub>x</sub>(z) = 3 e d<sub>w</sub>(z) = 3. Então d<sub>u</sub>(z) = min { c(u,v) + d<sub>v</sub>(z), c(u,x) + d<sub>x</sub>(z), c(u,w) + d<sub>w</sub>(z) } = min { 2 + 5, 1 + 3, 5 + 3 } = <b>4</b>. O vizinho que leva ao custo mínimo (x) é o <b>próximo salto</b> no caminho mais curto, e vai para a tabela de encaminhamento.</div>
+<h4>O algoritmo</h4>
+<ul>
+<li>D<sub>x</sub>(y) = <b>estimativa</b> do menor custo entre x e y.</li>
+<li>O nó x sabe o custo para cada vizinho, c(x,v), e mantém seu <b>vetor de distâncias</b> D<sub>x</sub> = [D<sub>x</sub>(y) para todo y em N], além dos vetores de seus vizinhos.</li>
+<li>Cada nó <b>envia periodicamente</b> seu vetor de distâncias estimadas aos vizinhos.</li>
+<li>Quando x recebe um novo vetor de um vizinho, <b>atualiza o seu</b>: D<sub>x</sub>(y) ← min<sub>v</sub> { c(x,v) + D<sub>v</sub>(y) } para cada y em N.</li>
+<li>Em condições mínimas, naturais, a estimativa D<sub>x</sub>(y) <b>converge</b> para o menor custo real d<sub>x</sub>(y).</li>
+</ul>
+<p>Características:</p>
+<ul>
+<li><b>Iterativo e assíncrono</b>: cada iteração local é causada por uma mudança no custo de um enlace local ou por uma mensagem de um vizinho (mudança no caminho de menor custo para algum destino). O nó espera uma dessas mudanças, <b>recalcula</b> sua tabela de distâncias e avisa os vizinhos se for necessário.</li>
+<li><b>Distribuído</b>: cada nó avisa seus vizinhos <b>só quando muda</b> seu caminho de menor custo para algum destino; os vizinhos avisam os deles, se mudou.</li>
+<li>Complexidade <b>O(nm)</b>, com n nós e m arestas.</li>
+</ul>
+<div class="ex">Exemplo dos slides, com todos os enlaces de custo 1. No começo cada roteador só conhece a si mesmo (distância 0). O roteador A envia o vetor (A = 0); quem recebe soma 1 (o custo do enlace) e anota A = 1 como uma entrada nova. Depois B e D enviam os deles, e outros roteadores atualizam. Em algumas rodadas os vetores trocados <b>não mudam mais nenhuma tabela</b>: o algoritmo <b>convergiu</b>.</div>
+<h4>Falha de um enlace</h4>
+<p>Se o enlace 1 falha, os dois roteadores nas pontas detectam e atualizam as tabelas: todos os nós alcançáveis por aquele enlace passam a estar a <b>distância infinita</b>. Eles enviam os novos vetores (por exemplo, B = inf), os vizinhos recalculam (só as rotas que dependiam do enlace mudam; D, por exemplo, passa a usar o enlace 3 para chegar a B) e o processo se repete até <b>convergir de novo</b>.</p>
+
+<h3>5. Problemas do vetor de distâncias</h3>
+<h4>Bouncing effect (efeito de ricochete)</h4>
+<p>Todos os enlaces custam 1, exceto o enlace 5, que custa 10. O enlace 2 falha:</p>
+<ol>
+<li>B atualiza imediatamente a sua tabela (C fica inalcançável);</li>
+<li>só que A ainda tem uma rota para C <b>passando por B</b> e envia o seu vetor com C = 3;</li>
+<li>para B, 3 é menor que infinito, então B adota a rota: C = 4, <b>apontando para A</b>;</li>
+<li>A recebe o vetor de B pelo mesmo enlace que usa para C e atualiza também. Forma-se um <b>loop de roteamento</b>: B aponta para A, que aponta para B.</li>
+</ol>
+<p>A cada rodada, os nós aumentam a métrica da rota para C em 2. Só quando a rota alternativa (pelo enlace 5, de custo 10) passa a ser melhor, o vetor vindo de C tem efeito em E (C = 11 &lt; 12) e o algoritmo converge. Resultado: <b>convergência lenta</b>.</p>
+<h4>Contagem até o infinito</h4>
+<p>O enlace 1 já falhou e a rede convergiu. Então o enlace 6 também falha, <b>separando a rede em duas</b>. Se D envia o seu vetor antes de A, tudo converge (A percebe que só D é alcançável). Mas se A envia primeiro, D atualiza a sua tabela e passa a achar que chega aos outros nós <b>por A</b>: forma-se um <b>loop entre A e D</b>. O processo se repete como no bouncing effect, mas como B, C e E estão <b>isolados</b> de A e D, a contagem continua <b>até o infinito</b>.</p>
+
+<h3>6. Melhorias no algoritmo</h3>
+<p>O bouncing effect e a contagem até o infinito <b>aumentam o tempo de convergência</b>. Duas melhorias: <b>split horizon</b> e <b>triggered updates</b>.</p>
+<h4>Split horizon (horizonte dividido)</h4>
+<p>Ideia: se A usa B para chegar a X, <b>não faz sentido B usar A</b> para chegar a X. Portanto, A <b>não deve anunciar a B uma rota para X</b>. Cada nó envia <b>vetores diferentes conforme o enlace de saída</b>: rotas que usam o enlace E como saída não são anunciadas no vetor enviado por E.</p>
+<table>
+<tr><th>Versão simples</th><th>Com <i>poisonous reverse</i> (retorno envenenado)</th></tr>
+<tr><td>Os nós <b>omitem</b> do vetor os destinos alcançados pelo enlace no qual o vetor é enviado.</td><td>Os nós <b>incluem</b> esses destinos, mas com <b>distância infinita</b>.</td></tr>
+</table>
+<p>No exemplo da contagem até o infinito, com split horizon isso não acontece: A envia a D um vetor só com A = 0. O mecanismo <b>evita loops de dois saltos</b>, mas <b>não evita loops em certos cenários</b> (como o “contagem até o infinito (2)”, em que um vetor com D = inf chega a B mas se perde antes de chegar a C, por um erro de transmissão, e só B atualiza a sua tabela).</p>
+<h4>Triggered updates (atualizações disparadas)</h4>
+<p>Os slides só listam esta melhoria. A ideia usual é enviar o vetor <b>assim que uma rota muda</b>, sem esperar o próximo envio periódico, para espalhar a má notícia mais rápido.</p>
+<div class="dica">DV: cada nó conta aos vizinhos o que sabe e confia no que eles contam (“boato de vizinho”). Funciona, mas pode criar loops e contagem até o infinito. Split horizon corta boa parte dos casos.</div>
 `
 },
 
+
 "redes-a16": {
-  resumo: "Camada de enlace: serviços do enlace, endereço MAC × IP, ARP (dentro da rede e entre redes), e os equipamentos hub, ponte e comutador, com tabela de comutação, autoaprendizagem e domínios de colisão.",
+  resumo: "A camada de enlace: serviços salto a salto, quadros, endereços MAC, ARP e os elementos de interconexão (repetidor, hub, ponte, comutador) comparados com o roteador.",
   html: `
-<h3>1. O que a camada de enlace faz</h3>
-<p>Transmite sobre o meio físico, <b>salto a salto</b>, os datagramas vindos da camada de rede. Define o <b>formato dos quadros</b> trocados entre nós adjacentes e o que cada nó faz ao enviar e receber. Um <b>enlace</b> é um canal entre nós adjacentes; o pacote desta camada é o <b>quadro</b>, que encapsula o datagrama. Os protocolos rodam em <b>todos os nós</b>, e cada enlace pode usar um protocolo diferente.</p>
-<h4>Serviços possíveis</h4>
+<h3>1. Rede x enlace</h3>
+<p>Um caminho entre origem e destino é composto por <b>um ou mais enlaces</b> (<i>links</i>). A camada de rede decide o caminho (roteamento) e encaminha os pacotes (IP). Mas <b>como os dados são transmitidos em cada enlace</b>? É a camada de <b>enlace</b>.</p>
 <ul>
-<li><b>Enquadramento</b>: delimitar onde o quadro começa e termina, acrescentando cabeçalho e fim de quadro (<i>trailer</i>).</li>
-<li><b>Entrega confiável</b> entre vizinhos: pouco usada em canais de baixa taxa de erro (fibra, alguns pares trançados) e necessária onde há muitos erros, como em <b>canais sem fio</b>.</li>
-<li><b>Controle de fluxo</b>: ajustar a produção e o consumo de quadros.</li>
-<li><b>Detecção de erros</b> (atenuação e ruído): o receptor descarta o quadro ou pede reenvio.</li>
-<li><b>Correção de erros</b>: o receptor localiza e corrige <b>sem retransmissão</b>.</li>
-<li>Transmissão <b>half-duplex ou full-duplex</b>.</li>
-<li><b>Controle de acesso ao meio</b>.</li>
+<li>Os protocolos de enlace rodam em <b>todos os nós</b>, e <b>cada enlace pode ter um protocolo diferente</b>.</li>
+<li>O serviço é <b>salto a salto</b>: transmitir pelo meio físico os datagramas vindos da camada de rede entre <b>nós adjacentes</b>.</li>
+<li>Eles definem o <b>formato dos quadros</b> trocados entre os nós adjacentes e as <b>ações de cada nó</b> ao enviar e receber um quadro.</li>
+<li>Um enlace é um canal de comunicação entre nós adjacentes. O pacote da camada 2 é o <b>quadro</b> (<i>frame</i>), que <b>encapsula o datagrama</b>.</li>
 </ul>
-<table>
-<tr><th>Ponto-a-ponto</th><th>Difusão (broadcast)</th></tr>
-<tr><td>uma estação em cada ponta (acesso domiciliar, enlace entre roteadores)</td><td>várias estações no mesmo canal: precisa de um protocolo para coordenar as transmissões (<b>MAC</b>, controle de acesso ao meio)</td></tr>
-</table>
-<p><b>Por que confiabilidade e controle de fluxo existem em duas camadas?</b> Porque atuam em escopos diferentes: o <b>transporte</b> é <b>fim-a-fim</b> (processo a processo) e o <b>enlace</b> é <b>salto-a-salto</b> (entre vizinhos). O enlace corrige localmente e mais rápido; o transporte garante a entrega correta para a aplicação mesmo que algum salto falhe.</p>
-<p>A camada é implementada <b>no adaptador</b> (NIC: placa Ethernet, cartão 802.11…), que também implementa a camada física, conecta-se ao barramento do nó ou à placa-mãe e mistura hardware, software e firmware. Quem envia encapsula o datagrama e acrescenta bits de verificação; quem recebe verifica, extrai o datagrama e o entrega.</p>
+<div class="ex">Pelo caminho A → roteador → B, o <b>cabeçalho IP</b> (A → B) continua o mesmo do começo ao fim, enquanto o <b>cabeçalho Ethernet</b> muda a cada enlace: em um quadro vai de A até o roteador; em outro, do roteador até B. É como a viagem de uma encomenda: a etiqueta final é a mesma, mas cada trecho tem sua nota de transporte.</div>
 
-<h3>2. Endereço MAC × endereço IP</h3>
-<p>O <b>MAC</b> (também endereço LAN, físico ou Ethernet) leva o datagrama de uma interface a outra <b>ligada fisicamente na mesma rede</b>. Tem <b>48 bits</b> (12 dígitos hexadecimais, como <code>1A:2F:BB:76:09:AD</code>), fica gravado na ROM do adaptador (ou é configurado por software) e é <b>único</b> na LAN. O de <b>broadcast</b> é <code>FF:FF:FF:FF:FF:FF</code>. O IEEE gerencia a alocação: o fabricante compra uma faixa, o que garante a unicidade.</p>
+<h3>2. Serviços da camada de enlace</h3>
+<p>Existe um <b>serviço básico</b> (levar o datagrama pelo enlace) e os protocolos podem oferecer outros:</p>
 <table>
-<tr><th>MAC</th><th>IP</th></tr>
-<tr><td>48 bits; estrutura <b>linear</b></td><td>32 bits; <b>hierárquico</b></td></tr>
-<tr><td><b>portável</b>: dá para levar a placa de uma LAN para outra</td><td><b>não portátil</b>: depende da sub-rede em que o nó está</td></tr>
-<tr><td>analogia: o número do <b>CPF</b></td><td>analogia: o <b>endereço postal</b> (CEP)</td></tr>
+<tr><th>Serviço</th><th>O que é</th></tr>
+<tr><td><b>Enquadramento</b> (<i>framing</i>)</td><td>delimitar onde o quadro começa e termina; <b>encapsular</b> o datagrama em um quadro com <b>cabeçalho e fim de quadro</b> (<i>trailer</i>)</td></tr>
+<tr><td><b>Entrega confiável</b> entre nós adjacentes</td><td>parecida com a do transporte; <b>pouco usada em canais com baixa taxa de erros</b> (fibra óptica, alguns pares trançados) e <b>necessária em canais com muitos erros</b> (sem fio)</td></tr>
+<tr><td><b>Controle de fluxo</b></td><td>compatibilizar as taxas de produção e consumo de quadros entre remetente e receptor</td></tr>
+<tr><td><b>Detecção de erros</b></td><td>os erros vêm da <b>atenuação do sinal</b> e de <b>ruído</b>; o receptor detecta e sinaliza ao remetente para retransmitir, ou simplesmente <b>descarta</b> o quadro com erro</td></tr>
+<tr><td><b>Correção de erros</b></td><td>o receptor <b>localiza e corrige</b> os erros <b>sem precisar de retransmissão</b></td></tr>
+<tr><td><b>Half-duplex e full-duplex</b></td><td>no half-duplex o nó <b>não pode transmitir e receber ao mesmo tempo</b></td></tr>
+<tr><td><b>Controle de acesso ao meio</b></td><td>necessário se o meio é compartilhado; usa os <b>endereços físicos (MAC)</b> nos cabeçalhos para identificar origem e destino dos quadros em enlaces multiponto</td></tr>
 </table>
+<p>Há dois tipos de canal:</p>
+<ul>
+<li><b>Ponto a ponto</b>: uma estação em cada extremidade (redes de acesso domiciliares, entre roteadores);</li>
+<li><b>Difusão (<i>broadcast</i>)</b>: várias estações no mesmo canal, o que exige um <b>protocolo de controle de acesso ao meio</b> para coordenar as transmissões.</li>
+</ul>
+<h4>Por que confiabilidade e controle de fluxo nas duas camadas?</h4>
+<p>Porque o <b>transporte</b> trabalha <b>fim a fim</b> e o <b>enlace</b> trabalha <b>salto a salto</b>.</p>
 
-<h3>3. ARP: do IP ao MAC</h3>
-<p>O <b>Address Resolution Protocol</b> (RFC 826) traduz IP em MAC na maioria das redes IEEE 802 e <b>só funciona dentro da sub-rede</b>. Cada nó tem uma <b>tabela ARP</b> com <b>(IP, MAC, TTL)</b>, construída automaticamente; o TTL típico é de <b>20 min</b>.</p>
-<h4>Destino na mesma rede</h4>
+<h3>3. Onde a camada de enlace roda</h3>
+<ul>
+<li>É implementada em cada nó da rede, e cada um pode usar uma tecnologia diferente.</li>
+<li>Fica no <b>adaptador</b> (NIC, <i>Network Interface Card</i>): placa Ethernet, cartão PCMCIA, cartão 802.11. O adaptador <b>também implementa a camada física</b>.</li>
+<li>Liga-se ao barramento do sistema do nó (por exemplo, PCI) ou vem integrado à placa-mãe. É uma combinação de <b>hardware, software e firmware</b>.</li>
+</ul>
+<p><b>Comunicação entre adaptadores</b>: o lado transmissor <b>encapsula o datagrama em um quadro</b> e acrescenta bits de verificação de erro, transferência confiável, controle de fluxo etc.; o lado receptor <b>verifica erros</b>, <b>extrai o datagrama</b> e o passa ao nó receptor.</p>
+
+<h3>4. Endereços MAC</h3>
+<table>
+<tr><th>Endereço IP</th><th>Endereço MAC (LAN, físico ou Ethernet)</th></tr>
+<tr><td>32 bits; <b>camada de rede</b>; leva o datagrama até a <b>sub-rede IP de destino</b>; <b>hierárquico</b></td><td>normalmente 48 bits; leva o datagrama de uma interface até <b>outra interface fisicamente conectada</b> (na mesma rede); estrutura <b>linear</b></td></tr>
+</table>
+<ul>
+<li>Representado por <b>12 dígitos hexadecimais</b> agrupados dois a dois, como <b>1A:2F:BB:76:09:AD</b>. Fica gravado na ROM do adaptador ou é configurado por software.</li>
+<li>Cada adaptador da LAN tem um MAC <b>único</b>. O <b>endereço de broadcast</b> é <b>FF-FF-FF-FF-FF-FF</b>.</li>
+<li>A alocação é gerenciada pelo <b>IEEE</b>: cada fabricante compra uma parte do espaço de endereços, o que garante a unicidade.</li>
+<li><b>Portabilidade</b>: o MAC permite mover uma placa de uma LAN para outra. O IP hierárquico <b>não é portátil</b>: depende da sub-rede à qual o nó está ligado (exige, por exemplo, IP móvel).</li>
+</ul>
+<div class="ex">O MAC é como o <b>CPF</b>: acompanha você para qualquer lugar. O IP é como o <b>endereço postal (CEP)</b>: depende de onde você mora.</div>
+
+<h3>5. ARP (<i>Address Resolution Protocol</i>)</h3>
+<p>Descrito na <b>RFC 826</b>. Faz a tradução de <b>endereços IP para MAC</b> na maioria das redes IEEE 802 e é executado <b>dentro da sub-rede</b>. Cada nó (estação ou roteador) tem uma <b>tabela ARP</b> com <b>(endereço IP, endereço MAC, TTL)</b>. O TTL diz quando o mapeamento será esquecido (valor típico: <b>20 min</b>). A tabela é construída <b>automaticamente</b>.</p>
+<h4>Na mesma rede</h4>
 <ol>
-<li>A quer enviar a B, mas o MAC de B não está na sua tabela ARP.</li>
-<li>A difunde uma <b>consulta ARP</b> com o IP de B, com MAC de destino <code>FF-FF-FF-FF-FF-FF</code>.</li>
-<li>Todas as máquinas da LAN recebem.</li>
-<li>B responde a A com seu MAC (<b>ARP Reply</b>), em quadro <b>unicast</b>.</li>
-<li>A registra em sua tabela.</li>
+<li>A quer enviar um datagrama a B e consulta a sua tabela ARP; se o MAC de B não estiver lá:</li>
+<li>A <b>difunde (broadcast)</b> um pacote de <b>solicitação ARP</b> (<i>ARP Query</i>) com o IP de B, com MAC de destino FF-FF-FF-FF-FF-FF. <b>Todas as máquinas da LAN</b> recebem;</li>
+<li>B reconhece o seu IP e <b>responde diretamente a A</b> (<i>ARP Reply</i>) com o seu MAC, em um quadro <b>unicast</b>;</li>
+<li>A registra o par IP-MAC na tabela.</li>
 </ol>
-<div class="ex">Alguém grita na sala “quem é o fulano?” (broadcast). Só o fulano responde diretamente a você (unicast), e você anota o rosto dele na sua caderneta (tabela ARP), que será apagada depois de um tempo.</div>
-<p>O ARP é <b>soft state</b> (a informação “vai embora” se não for renovada) e <b>plug-and-play</b> (os nós montam suas tabelas sem o administrador).</p>
-<h4>Destino em outra rede (A → B, passando pelo roteador R)</h4>
-<p>R tem <b>duas tabelas ARP</b>, uma para cada rede. A consulta sua tabela de roteamento, vê que o próximo salto é R, usa o ARP para obter o MAC de R e envia o quadro. R retira o datagrama, vê que é para B, consulta sua tabela de roteamento, obtém o MAC de B por ARP e envia um novo quadro.</p>
-<table>
-<tr><th>Trecho</th><th>IP de origem</th><th>IP de destino</th><th>MAC de destino</th></tr>
-<tr><td>A → R</td><td>A</td><td>B</td><td><b>R</b></td></tr>
-<tr><td>R → B</td><td>A</td><td>B</td><td><b>B</b></td></tr>
-</table>
-<div class="dica">Guarde: o <b>IP</b> de origem e destino <b>não muda</b> ao longo do caminho; o <b>MAC</b> muda a <b>cada salto</b>.</div>
-<p>Ferramentas: <b>tcpdump</b> (mostra o tráfego ARP: <i>arp who-has … tell …</i> e <i>arp reply … is-at …</i>), <b>arp</b> (mostra a tabela ARP) e <b>arping</b> (o “ping da camada de enlace”).</p>
-
-<h3>4. Hub, ponte e comutador</h3>
-<table>
-<tr><th>Equipamento</th><th>Camada</th><th>O que faz</th></tr>
-<tr><td><b>Repetidor</b></td><td>física</td><td>poucas interfaces; recebe, <b>recupera a forma do sinal</b>, amplifica e retransmite os bits para todas as outras</td></tr>
-<tr><td><b>Hub</b></td><td>física</td><td>um repetidor que repete os bits de uma porta para todas as outras; os segmentos formam <b>um único domínio de colisão</b>; em geral não liga segmentos de taxas diferentes</td></tr>
-<tr><td><b>Ponte</b> (bridge)</td><td>enlace</td><td>poucas interfaces; usa o <b>MAC de destino</b> para encaminhar e filtrar; <b>cada segmento é um domínio de colisão separado</b>; liga taxas e redes diferentes</td></tr>
-<tr><td><b>Comutador</b> (switch)</td><td>enlace</td><td>uma ponte de <b>alto desempenho e muitas interfaces</b>; hoje, em geral, <b>uma estação por domínio de colisão</b>; pode trabalhar em <b>full-duplex</b></td></tr>
-</table>
-<p><b>Domínio de colisão</b>: uma rede com CSMA/CD em que haverá colisão se duas estações transmitirem ao mesmo tempo. Considerando 8 estações:</p>
-<table>
-<tr><th>Equipamento</th><th>Domínios de colisão</th></tr>
-<tr><td>Hub</td><td><b>1</b></td></tr>
-<tr><td>Ponte (2 interfaces)</td><td><b>2</b></td></tr>
-<tr><td>Comutador (8 interfaces)</td><td><b>8</b></td></tr>
-</table>
-<div class="ex">Hub: uma sala onde todos conversam ao mesmo tempo e só um consegue ser ouvido. Comutador: cada pessoa tem uma linha direta com o telefonista, e vários pares podem conversar ao mesmo tempo, sem colisão.</div>
-
-<h3>5. Como a ponte e o comutador decidem</h3>
-<p>Duas capacidades: <b>filtragem</b> (decidir se o quadro é repassado ou descartado) e <b>repasse</b> (decidir para quais interfaces ele vai). Usam a <b>tabela de comutação</b>, com 3 regras:</p>
+<ul>
+<li>A informação é <b>“soft state”</b>: <b>expira</b> a menos que seja renovada.</li>
+<li>Um nó pode responder a uma requisição com um MAC que conhece, <b>não necessariamente o do destino</b>.</li>
+<li>O ARP é <b>plug-and-play</b>: os nós criam suas tabelas sem intervenção do administrador.</li>
+</ul>
+<h4>Entre redes diferentes (A → R → B)</h4>
+<p>O roteador R tem <b>duas tabelas ARP</b>, uma para cada rede local.</p>
 <ol>
-<li>Destino <b>na tabela</b> e em <b>outra</b> interface → transmite para essa interface.</li>
-<li>Destino na tabela e na <b>mesma</b> interface de onde veio → <b>descarta</b>.</li>
-<li>Destino <b>não está</b> na tabela → transmite por <b>todas as interfaces, exceto a de origem</b> (inundação).</li>
+<li>A cria o datagrama com IP de origem A e destino B.</li>
+<li>A consulta a tabela de roteamento e obtém <b>R como próximo salto</b>.</li>
+<li>A usa o ARP para obter o <b>MAC de R</b>.</li>
+<li>A cria um quadro com MAC de destino = R e o datagrama A → B na carga útil, e o adaptador envia.</li>
+<li>O adaptador de R recebe o quadro; R <b>remove o datagrama</b> do quadro Ethernet e vê que é destinado a B.</li>
+<li>R consulta a tabela de roteamento e usa o ARP para obter o <b>MAC de B</b>.</li>
+<li>R cria um quadro com o datagrama A → B e o adaptador de R o envia a B, que o recebe.</li>
 </ol>
-<h4>Autoaprendizagem</h4>
-<p>A tabela se monta sozinha: cada quadro que passa é examinado, e entram na tabela o <b>endereço de origem</b>, a <b>interface</b> de onde veio e o <b>horário</b>. Os registros <b>expiram</b>, pois uma estação pode mudar de lugar. Assim o comutador “aprende” onde está cada transmissor.</p>
-<div class="ex">C envia um quadro para D. O comutador anota “C está na interface 1”. Como D ainda não está na tabela, ele encaminha para as outras interfaces (2 e 3) e D recebe. Quando D responde, o comutador anota “D está na interface 2” e, como C já está na tabela, envia o quadro <b>só pela interface 1</b>: transmissão seletiva.</div>
-<p>Com o comutador, as estações têm conexão direta e dedicada a ele, que armazena quadros. Usa-se o Ethernet em cada enlace, mas <b>sem colisões</b>, pois cada enlace é um domínio de colisão em full-duplex. Assim, A→A’ e B→B’ acontecem <b>ao mesmo tempo</b>, o que não é possível com hubs.</p>
-<h4>Comutadores × roteadores</h4>
+<p><b>Ferramentas</b>: o <b>tcpdump</b> mostra as mensagens (por exemplo, <i>arp who-has 192.168.99.254 tell 192.168.99.35</i> e a resposta <i>arp reply … is-at …</i>); o <b>arp</b> mostra a tabela ARP da estação; o <b>arping</b> é o “ping” da camada de enlace.</p>
+
+<h3>6. Elementos de interconexão</h3>
 <table>
-<tr><th></th><th>Roteador</th><th>Comutador</th></tr>
-<tr><td><b>Camada</b></td><td>rede</td><td>enlace</td></tr>
-<tr><td><b>Tabela</b></td><td>de roteamento</td><td>de comutação</td></tr>
-<tr><td><b>Algoritmos</b></td><td>de roteamento</td><td>de filtragem e de aprendizagem</td></tr>
+<tr><th>Elemento</th><th>Nível</th><th>Como funciona</th></tr>
+<tr><td><b>Repetidor</b></td><td>físico</td><td>poucas interfaces; <b>recebe, conforma</b> (recupera a forma do sinal original), <b>amplifica</b> e retransmite os bits de uma interface para todas as outras</td></tr>
+<tr><td><b>Hub</b></td><td>físico</td><td>é um repetidor: repete os bits de uma porta para <b>todas as outras</b>. Os segmentos formam <b>um único domínio de colisão</b> (uma rede com CSMA/CD onde há colisão se duas estações transmitem ao mesmo tempo). Em geral <b>não conecta</b> segmentos com taxas diferentes.</td></tr>
+<tr><td><b>Ponte (bridge)</b></td><td>enlace</td><td>poucas interfaces; usa o <b>MAC de destino</b> para <b>encaminhar e filtrar</b> quadros; <b>cada segmento é um domínio de colisão separado</b>; conecta segmentos de <b>taxas diferentes</b> e de <b>tipos diferentes</b></td></tr>
+<tr><td><b>Comutador (switch)</b></td><td>enlace</td><td>ponte de <b>alto desempenho</b> e <b>mais interfaces</b>; hoje a maioria é usada em <b>acesso dedicado</b> (uma estação por domínio de colisão); usa o MAC de destino para encaminhar e filtrar; <b>full-duplex</b>; o quadro sai sempre pela mesma saída, decidida uma vez por todas</td></tr>
 </table>
+<p>No exemplo da figura de Tanenbaum: o hub forma <b>1 domínio de colisão</b>, a ponte, <b>2</b>, e o comutador, <b>8</b> (um por enlace).</p>
+<h4>Ponte: filtragem, repasse e autoaprendizagem</h4>
+<ul>
+<li><b>Filtragem</b>: decidir se um quadro será repassado a alguma interface ou descartado.</li>
+<li><b>Repasse</b>: determinar as interfaces para as quais o quadro deve ir e fazê-lo.</li>
+</ul>
+<p>Usa uma <b>tabela de comutação</b>:</p>
+<ul>
+<li>destino na tabela e <b>em outra interface</b>: transmite para a interface correspondente;</li>
+<li>destino na tabela e <b>na mesma interface de onde veio</b>: <b>descarta</b>;</li>
+<li>destino <b>fora da tabela</b>: transmite em <b>todas as interfaces, exceto aquela de onde veio</b> (inundação).</li>
+</ul>
+<p>A tabela é construída <b>automaticamente</b> (autoaprendizagem): cada quadro que passa é examinado e a ponte registra o <b>endereço de origem</b>, a <b>interface</b> por onde veio e o <b>tempo</b> do registro. Os registros <b>expiram</b> (afinal, uma estação pode mudar de lugar).</p>
+<h4>Comutador: várias transmissões ao mesmo tempo</h4>
+<p>As estações têm <b>conexão direta e dedicada</b> ao comutador, que armazena os quadros. Como o enlace é full-duplex e cada enlace é seu próprio domínio de colisão, <b>não há colisões</b> (o Ethernet é usado em cada enlace de entrada). Em um comutador de seis interfaces, A → A′ e B → B′ podem ocorrer <b>simultaneamente</b>; com hubs isso não é possível.</p>
+<p><b>Tabela de comutação</b>: cada entrada tem <b>(endereço MAC da estação, interface para alcançá-la, carimbo de tempo)</b>. Parece uma tabela de roteamento, mas é construída por autoaprendizagem e <b>não por um protocolo de roteamento</b>: quando um quadro chega, o comutador “aprende” a localização do transmissor e registra o par transmissor/local (por exemplo, A está na interface 1, TTL 60). A tabela começa <b>vazia</b>.</p>
+<p><b>Algoritmo ao receber um quadro</b>:</p>
+<ol>
+<li>registra o enlace associado à estação transmissora;</li>
+<li>consulta a tabela com o MAC de destino;</li>
+<li>se achou entrada: se o destino está <b>no segmento de onde veio o quadro</b>, descarta; senão, <b>repassa</b> na interface indicada;</li>
+<li>se não achou: usa <b>inundação</b> (todas as interfaces, menos a de chegada).</li>
+</ol>
+<div class="ex">Três hubs ligados a um comutador. <b>C</b> manda um quadro para <b>D</b>: o comutador anota “C está na interface 1”; como D não está na tabela, <b>inunda</b> as interfaces 2 e 3; D recebe. Depois <b>D</b> responde a C: o comutador anota “D está na interface 2”; como C já está na tabela, encaminha o quadro <b>só pela interface 1</b>.</div>
+
+<h3>7. Comutadores x roteadores</h3>
+<p>Ambos são dispositivos <b>armazena-e-repassa</b>. A diferença está na camada:</p>
+<table>
+<tr><th>Roteador</th><th>Comutador</th></tr>
+<tr><td>dispositivo da <b>camada de rede</b>; examina os cabeçalhos dessa camada; <b>mantém tabelas de roteamento</b> e implementa <b>algoritmos de roteamento</b>; escolhe a melhor saída no momento da decisão, pelo endereço do destinatário</td><td>dispositivo da <b>camada de enlace</b>; <b>mantém tabelas de comutação</b> e implementa <b>filtragem</b> e <b>algoritmos de aprendizagem</b></td></tr>
+</table>
+<div class="dica">Hub repete tudo para todo mundo. Ponte e comutador olham o MAC e aprendem onde cada estação está. Roteador olha o IP. Mnemônico das camadas: repetidor/hub = física; ponte/comutador = enlace; roteador = rede.</div>
 `
-}
+},
+
 
 /*__FIM__*/
 };

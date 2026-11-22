@@ -48,7 +48,7 @@ Manutenção de Software (aulas 12 e 13) e a **revisão da aula 14**, que é uma
 com os 20 exercícios resolvidos (os slides trazem só os enunciados; as respostas são resolução própria).
 
 Em **Redes** há resumo das 8 aulas de slides: aulas 1–3, 4–5, 6, 7, 8–10, 11–14, 15 e 16. As duas listas do
-Kurose (caps. 1 e 2) ficam só como cartões. Os resumos foram escritos a partir dos cartões de cada aula.
+Kurose (caps. 1 e 2) ficam só como cartões. Os resumos foram escritos a partir do texto dos slides de cada aula.
 
 ## Progresso (sem banco de dados)
 
