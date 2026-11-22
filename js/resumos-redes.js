@@ -328,187 +328,284 @@ dados dados dados ...</pre>
 
 
 "redes-a6": {
-  resumo: "Como funciona o e-mail (agentes, servidores, SMTP, POP3, IMAP) e como o DNS traduz nomes em endereços IP: hierarquia de servidores, cache, consultas iterativas e recursivas e os registros de recurso.",
+  resumo: "Como o e-mail viaja pela Internet (agentes de usuário, servidores, SMTP, POP3 e IMAP) e como o DNS traduz nomes em endereços IP, com a hierarquia de servidores, o cache e os registros.",
   html: `
 <h3>1. O sistema de correio da Internet</h3>
-<p>São <b>4 componentes</b>:</p>
+<p>O e-mail tem quatro componentes:</p>
+<table>
+<tr><th>Componente</th><th>Papel</th></tr>
+<tr><td><b>Agente de usuário (AU)</b></td><td>é o programa do usuário: permite <b>ler, responder, encaminhar, salvar e editar</b> mensagens (Outlook, Eudora, Thunderbird, Mutt)</td></tr>
+<tr><td><b>Servidor de correio</b> (agente de transferência de mensagens)</td><td><b>armazena</b> as mensagens e se comunica com outros servidores para transferi-las</td></tr>
+<tr><td><b>SMTP</b></td><td>protocolo que <b>transfere mensagens entre servidores</b> de correio</td></tr>
+<tr><td><b>Protocolo de acesso ao correio</b></td><td>traz as mensagens do servidor de correio até o agente de usuário</td></tr>
+</table>
+<div class="ex">Alice escreve para <b>bob@someschool.edu</b>:
 <ol>
-<li><b>Agentes de usuário (AU)</b>: ler, responder, encaminhar, salvar e editar (Outlook, Thunderbird, Mutt).</li>
-<li><b>Servidores de correio</b> (agentes de transferência): guardam e transferem as mensagens.</li>
-<li><b>SMTP</b>: leva a mensagem <b>entre servidores</b>.</li>
-<li><b>Protocolos de acesso</b>: levam a mensagem <b>do servidor até o AU</b>.</li>
-</ol>
-<h4>Alice envia uma mensagem a Bob</h4>
-<ol>
-<li>Alice compõe a mensagem para bob@someschool.edu no seu AU.</li>
-<li>O AU a envia ao servidor de Alice, que a coloca numa <b>fila</b>.</li>
-<li>O cliente SMTP abre uma <b>conexão TCP</b> com o servidor de Bob.</li>
-<li>Envia a mensagem pela conexão.</li>
-<li>O servidor de Bob a coloca na <b>caixa de entrada</b> dele.</li>
-<li>Bob abre seu AU e lê.</li>
-</ol>
-<div class="ex">É o correio de papel: você põe a carta na caixa (AU → servidor), o carteiro leva até a agência do destino (SMTP) e o destinatário busca na sua caixa postal (POP/IMAP).</div>
+<li>Alice usa o AU para compor a mensagem;</li>
+<li>o AU manda a mensagem ao <b>servidor de correio dela</b>, onde ela entra na <b>fila</b> de mensagens;</li>
+<li>o lado cliente do SMTP abre uma <b>conexão TCP</b> com o servidor de correio de Bob;</li>
+<li>o cliente SMTP envia a mensagem de Alice pela conexão;</li>
+<li>o servidor de Bob coloca a mensagem na <b>caixa de entrada</b> dele;</li>
+<li>Bob chama o AU dele para ler a mensagem.</li>
+</ol></div>
 
-<h3>2. SMTP</h3>
+<h3>2. SMTP (<i>Simple Mail Transfer Protocol</i>)</h3>
 <ul>
-<li>RFC 2821; usa <b>TCP, porta 25</b>.</li>
-<li>Mensagens em <b>ASCII de 7 bits</b> (para 8 bits usa-se extensão ou codificação).</li>
-<li>Há um cliente SMTP (quem envia) e um servidor SMTP (quem recebe).</li>
-<li>Usa <b>conexões persistentes</b> e reconhece o fim da mensagem por <code>CRLF.CRLF</code>.</li>
+<li>Descrito na <b>RFC 2821</b>; usa <b>TCP, porta 25</b>.</li>
+<li>A comunicação é entre um <b>cliente SMTP</b> (transmissor) e um <b>servidor SMTP</b> (receptor).</li>
+<li>As mensagens vão em <b>ASCII de 7 bits</b>; para 8 bits usa-se extensão ou codificação.</li>
+<li>Usa <b>conexões persistentes</b> e reconhece o fim da mensagem por <b>CRLF.CRLF</b>.</li>
+<li>Funciona por <b>comandos</b> entre servidores: <b>HELO</b>, <b>MAIL FROM</b>, <b>RCPT TO</b>, <b>DATA</b>, <b>QUIT</b>, <b>VRFY</b>.</li>
 </ul>
-<p>Comandos principais: <b>HELO</b> (ou EHLO), <b>MAIL FROM</b>, <b>RCPT TO</b>, <b>DATA</b>, <b>QUIT</b>, <b>VRFY</b>. Uma conversa típica (<code>telnet servidor.br 25</code>), em que S é o servidor e C o cliente:</p>
+<h4>Exemplo de interação (<code>telnet servidor.br 25</code>)</h4>
 <pre>S: 220 servidor.br
 C: HELO cliente.br
-S: 250 Hello cliente.br
-C: MAIL FROM:&lt;a@cliente.br&gt;
-S: 250 Sender ok
-C: RCPT TO:&lt;b@servidor.br&gt;
-S: 250 Recipient ok
+S: 250 Hello cliente.br, pleased to meet you
+C: MAIL FROM: &lt;usuario@cliente.br&gt;
+S: 250 usuario@cliente.br... Sender ok
+C: RCPT TO: &lt;usuario@servidor.br&gt;
+S: 250 usuario@servidor.br ... Recipient ok
 C: DATA
-S: 354 Enter mail
+S: 354 Enter mail, end with "." on a line by itself
+C: From: usuario@cliente.br
+C: To: usuario@servidor.br
 C: Subject: Teste
-C: (linha em branco)
-C: Teste de envio.
+C:
+C: Teste de envio de correio.
 C: .
-S: 250 Message accepted
+S: 250 Message accepted for delivery
 C: QUIT
-S: 221 closing connection</pre>
-<p><b>Estrutura do e-mail</b>: um <b>envelope</b> (informação para o transporte) e a <b>mensagem</b>, formada por cabeçalho (<code>To:</code>, <code>From:</code>, <code>Subject:</code>, <code>Received:</code>), uma linha em branco e o corpo. O corpo só interessa ao destinatário.</p>
-<h4>SMTP × HTTP</h4>
+S: 221 servidor.br closing connection</pre>
+<p>(S = servidor, C = cliente.) Leia como uma conversa de balcão: o servidor se apresenta, o cliente diz quem é, de quem vem a mensagem, para quem vai, e então manda o conteúdo, terminando com um ponto sozinho em uma linha.</p>
+
+<h3>3. Como é feita a mensagem</h3>
+<p>O correio eletrônico é formado por:</p>
+<ul>
+<li><b>Envelope</b>: encapsula a mensagem e traz as informações necessárias para o <b>transporte</b>;</li>
+<li><b>Mensagem</b>: <b>cabeçalho</b> (campos como <i>To:</i>, <i>From:</i>, <i>Subject:</i>, <i>Received:</i>), uma <b>linha em branco</b> e o <b>corpo</b>, que só diz respeito ao destinatário.</li>
+</ul>
+<pre>Received: from cliente.br by servidor.br; 16 Jul 06 10:30:01 GMT
+Received: from maquina.cliente.br by cliente.br; 16 Jul 06 10:29:58 GMT
+From: usuario@cliente.br
+To: usuario@servidor.br
+Subject: Teste
+
+Teste de envio de correio.</pre>
+<div class="dica">Envelope = o que o correio usa para entregar. Cabeçalho + corpo = a carta dentro dele.</div>
+
+<h3>4. SMTP x HTTP</h3>
 <table>
 <tr><th></th><th>HTTP</th><th>SMTP</th></tr>
-<tr><td><b>Direção</b></td><td><b>pull</b> (recupera)</td><td><b>push</b> (envia)</td></tr>
-<tr><td><b>Em comum</b></td><td colspan="2">interação comando/resposta e códigos de status em ASCII</td></tr>
-<tr><td><b>Objetos</b></td><td>cada objeto na sua própria resposta</td><td>vários objetos numa só mensagem de múltiplas partes (MIME)</td></tr>
+<tr><td>Direção</td><td><b>pull</b> (o cliente recupera)</td><td><b>push</b> (o emissor envia)</td></tr>
+<tr><td>Objetos</td><td>cada objeto vai na <b>sua própria</b> mensagem de resposta</td><td>vários objetos vão em <b>uma só</b> mensagem de múltiplas partes (<b>MIME</b>)</td></tr>
 </table>
+<p>Os dois têm interação <b>comando/resposta</b> e <b>códigos de status em ASCII</b>.</p>
 
-<h3>3. Protocolos de acesso ao correio</h3>
-<p>O SMTP só <b>entrega e guarda</b> no servidor do destinatário. Para o usuário ler:</p>
+<h3>5. Protocolos de acesso ao correio</h3>
+<p>O SMTP só faz a <b>entrega e o armazenamento no servidor do receptor</b>. Para o usuário recuperar as mensagens de lá, é preciso outro protocolo:</p>
 <ul>
-<li><b>POP</b> (RFC 1939): autorização e transferência.</li>
-<li><b>IMAP</b> (RFC 1730): mais comandos (mais complexo) e manuseio das mensagens no servidor.</li>
-<li><b>HTTP</b>: webmails (Hotmail, Yahoo! Mail…).</li>
+<li><b>POP3</b> (<i>Post Office Protocol</i>, RFC 1939): tem fase de <b>autorização</b> (agente e servidor) e fase de <b>transação</b>.</li>
+<li><b>IMAP</b> (<i>Internet Mail Access Protocol</i>, RFC 1730): tem <b>mais comandos</b> (é mais complexo) e permite <b>manusear mensagens armazenadas no servidor</b>.</li>
+<li><b>HTTP</b>: usado em Hotmail, Yahoo! Mail e outros webmails.</li>
 </ul>
-<p><b>POP3</b> tem duas fases. <b>Autorização</b>: <code>user</code> e <code>pass</code> (respostas <code>+OK</code> ou <code>-ERR</code>). <b>Transação</b>: <code>list</code> (lista os números), <code>retr</code> (recupera), <code>dele</code> (apaga), <code>quit</code>.</p>
+<h4>POP3 na prática</h4>
+<p>Na <b>autorização</b>, o cliente declara o nome (<code>user</code>) e a senha (<code>pass</code>) e o servidor responde <b>+OK</b> ou <b>-ERR</b>. Na <b>transação</b>, o cliente usa:</p>
+<ul>
+<li><code>list</code>: lista os números das mensagens;</li>
+<li><code>retr</code>: recupera uma mensagem pelo número;</li>
+<li><code>dele</code>: apaga uma mensagem;</li>
+<li><code>quit</code>: encerra.</li>
+</ul>
 <table>
 <tr><th>POP3</th><th>IMAP</th></tr>
-<tr><td>“baixa e apaga”: se Bob mudar de cliente, não relê as mensagens</td><td>deixa tudo <b>no servidor</b>; não precisa baixar tudo</td></tr>
-<tr><td>“baixa e mantém”: copia em clientes diferentes</td><td>permite organizar em <b>pastas</b></td></tr>
-<tr><td>não guarda estado entre conexões</td><td><b>guarda o estado</b> entre sessões (pastas e mapeamento mensagens → pastas)</td></tr>
+<tr><td>No exemplo dos slides usa o modo <b>“download e delete”</b>: depois de baixar, apaga do servidor. Bob não pode reler as mensagens se mudar de cliente.<br>Existe também o <b>“download e mantenha”</b>: copia as mensagens em clientes diferentes.<br><b>Não mantém estado</b> entre conexões.</td><td>Mantém <b>todas as mensagens em um único lugar</b>: o servidor.<br>Permite <b>organizar em pastas</b>.<br><b>Mantém o estado</b> do usuário entre sessões (nomes das pastas e o mapeamento entre IDs das mensagens e pastas).</td></tr>
 </table>
-<div class="dica">Segurança: o SMTP <b>confia em todo mundo</b> e não tem autenticação, então spammers fazem a mensagem parecer vinda de qualquer endereço. A “solução” é o <b>SMTP-AUTH</b> (RFC 2554), que identifica o remetente de verdade; mas um usuário autenticado ainda pode falsificar o remetente do envelope ou o campo <code>From:</code>.</div>
 
-<h3>4. DNS: por que existe</h3>
-<p>Máquinas têm dois identificadores: o <b>endereço IP</b> (ex.: 200.20.15.38: bits, tamanho fixo, hierárquico, bom para a máquina) e o <b>nome</b> (ex.: www.ic.uff.br: tamanho variável, bom para o humano). O <b>Domain Name System</b> faz o mapeamento nos dois sentidos (inclusive o DNS reverso).</p>
-<div class="ex">É a agenda do celular: você procura “Ana” e a agenda sabe o número. O DNS é a agenda da Internet, só que espalhada por milhares de servidores.</div>
-<p>O DNS é uma <b>base de dados distribuída e hierárquica</b> mais um <b>protocolo de aplicação</b> para os servidores se consultarem (mais um caso de “complexidade na borda”). Oferece:</p>
+<h3>6. O problema de segurança do SMTP</h3>
+<p>O SMTP <b>assume entidades confiáveis</b> e não tem mecanismo de autenticação, então <b>spammers</b> podem fazer uma mensagem parecer ter vindo de qualquer endereço. A “solução” é a extensão <b>SMTP-AUTH</b> (RFC 2554), que permite a identificação real do remetente: em vez de <code>HELO</code> o cliente usa <code>EHLO</code> e então <code>auth login</code>, com usuário e senha.</p>
+<p>Só que isso <b>autentica o usuário</b> que envia: um usuário autenticado ainda pode <b>falsificar o remetente do envelope ou o campo From:</b> da mensagem.</p>
+
+<h3>7. DNS: por que ele existe</h3>
+<p>Uma pessoa tem várias identificações (nome, RG, CPF, carteira de motorista…), cada uma boa para um uso. Na Internet é igual:</p>
+<table>
+<tr><th>Identificador</th><th>Características</th></tr>
+<tr><td><b>Endereço IP</b> (ex.: 200.20.15.38)</td><td>conjunto de bits, tamanho fixo, estrutura hierárquica; <b>bom para a máquina</b>, pouco intuitivo para pessoas</td></tr>
+<tr><td><b>Nome</b> (ex.: www.ic.uff.br)</td><td>tamanho variável, intuitivo; <b>bom para o ser humano</b></td></tr>
+</table>
+<p>O <b>DNS</b> (<i>Domain Name System</i>) faz o <b>mapeamento entre nomes de domínio e endereços IP</b> (e também o inverso: o DNS reverso). Ele é composto por:</p>
 <ul>
-<li>tradução de <b>nome → IP</b>;</li>
-<li><b>apelidos</b> (aliasing): nome canônico e apelidos;</li>
-<li><b>distribuição de carga</b>: vários IPs para um mesmo nome (servidores Web replicados).</li>
+<li>uma <b>base de dados distribuída</b> entre vários servidores, organizada de forma hierárquica;</li>
+<li>um <b>protocolo da camada de aplicação</b>, pelo qual os nós se comunicam para resolver nomes. É mais um exemplo do princípio da Internet de pôr a <b>complexidade na borda</b> da rede.</li>
 </ul>
-<p>Por que <b>não</b> uma base centralizada? Não escalaria: <b>ponto único de falha</b>, volume de tráfego, <b>distância</b> até o usuário (mais tempo de resposta) e manutenção.</p>
+<h4>Serviços do DNS</h4>
+<ul>
+<li><b>Traduz</b> um nome para um endereço IP.</li>
+<li><b>Apelidos</b> (<i>aliasing</i>) para servidores, estações, roteadores: mapeia nomes canônicos e apelidos.</li>
+<li><b>Distribuição de carga</b>: vários endereços IP mapeados a um só nome (por exemplo, servidores Web replicados).</li>
+</ul>
+<h4>Por que não uma base centralizada?</h4>
+<ul>
+<li><b>Ponto único de falha</b>: se cair, ninguém resolve nomes;</li>
+<li><b>volume de tráfego</b>: todas as requisições e respostas num só lugar;</li>
+<li><b>distância</b>: usuários longe do servidor têm maior tempo de resposta;</li>
+<li><b>manutenção</b>: uma base gigante seria difícil de manter.</li>
+</ul>
+<p>Resumindo: <b>não é escalável</b>. Por isso a base é distribuída e hierárquica.</p>
 
-<h3>5. A hierarquia de servidores</h3>
+<h3>8. A hierarquia de servidores</h3>
 <table>
 <tr><th>Nível</th><th>Quem é</th></tr>
-<tr><td><b>Raiz</b></td><td>13 no mundo (10 só nos EUA), cada um com várias réplicas; consultados por servidores locais que não resolvem o nome. Com o cache dos TLDs, quase não são visitados</td></tr>
-<tr><td><b>TLD</b> (domínio de topo)</td><td>com, org, net, edu e os domínios de países (br, uk, fr, ca, jp). O NIC.br mantém o .br</td></tr>
-<tr><td><b>Oficiais</b> (authoritative)</td><td>servidores das organizações, com os mapeamentos oficiais (inclusive de Web e correio); mantidos pela organização ou pelo provedor</td></tr>
-<tr><td><b>Local</b> (padrão)</td><td>não pertence necessariamente à hierarquia; cada ISP, empresa ou universidade tem um. Recebe a consulta da estação e <b>consulta os demais por ela</b></td></tr>
+<tr><td><b>Servidores raiz</b></td><td>consultados pelos servidores locais que <b>não conseguem resolver</b> o nome. Procuram o servidor oficial se o mapeamento é desconhecido, obtêm a tradução e a devolvem ao servidor local. São <b>13 no mundo</b> (10 só nos EUA); cada um pode ter várias <b>réplicas</b> espalhadas.</td></tr>
+<tr><td><b>Servidores TLD</b> (<i>Top-level Domain</i>)</td><td>cuidam de domínios como com, org, net, edu e de todos os <b>domínios de país</b> (br, uk, fr, ca, jp). A Network Solutions mantém o .com (monopólio até 1999); o <b>NIC.br</b> (Registro.br) mantém o .br.</td></tr>
+<tr><td><b>Servidores oficiais</b> (<i>authoritative</i>)</td><td>os das organizações: guardam os mapeamentos <b>oficiais</b> entre nomes e IPs, inclusive de outros servidores da organização (Web, correio). Podem ser mantidos pela organização ou pelo provedor.</td></tr>
+<tr><td><b>Servidor de nomes local</b></td><td>não pertence necessariamente à hierarquia; cada provedor (ISP residencial, empresa, universidade) tem o seu, também chamado de servidor de nomes <b>padrão</b>. A estação pergunta <b>primeiro a ele</b>, e ele atua como intermediário: <b>é ele quem consulta os outros</b>.</td></tr>
 </table>
-<h4>Consulta iterativa × recursiva</h4>
-<ul>
-<li><b>Iterativa</b>: o servidor responde “não conheço, pergunte àquele”. Quem corre atrás é o solicitante (o servidor local).</li>
-<li><b>Recursiva</b>: a responsabilidade de resolver passa ao servidor contatado. ⚠️ Gera <b>mais carga nos servidores mais altos</b> da hierarquia.</li>
-</ul>
-<div class="ex">Você pergunta o caminho a alguém. Resposta iterativa: “não sei, pergunte na padaria”. Resposta recursiva: “espera, eu pergunto por você e já volto”.</div>
-<p><b>Cache</b>: quando um servidor aprende um mapeamento, guarda localmente, e evita consultar servidores mais altos. As entradas têm <b>TTL</b> e somem depois de um tempo (geralmente 2 dias).</p>
+<div class="ex">O cliente quer acessar <b>amazon.com</b>. O servidor local pergunta ao <b>raiz</b>, que indica o servidor <b>.com</b>; este indica o servidor <b>amazon.com</b>, que responde o IP de www.amazon.com. É como perguntar na portaria do condomínio: “não sei, mas o bloco C sabe; no bloco C, o andar 3 sabe; no andar 3, o apartamento tal te atende”.</div>
 
-<h3>6. Registros de recurso (RR)</h3>
-<p>A base é feita de registros no formato <b>(nome, valor, tipo, TTL)</b>:</p>
+<h3>9. Consulta iterativa e recursiva</h3>
+<p>No exemplo dos slides, a estação <b>cis.poly.edu</b> quer o IP de <b>gaia.cs.umass.edu</b>. Ela pergunta ao seu servidor local, <b>dns.poly.edu</b>.</p>
+<table>
+<tr><th>Consulta iterativa</th><th>Consulta recursiva</th></tr>
+<tr><td>O servidor consultado responde com o <b>nome de outro servidor</b> para contato: “não conheço este nome, mas pergunte para esse servidor”. O servidor local vai perguntando, um por vez: raiz, TLD, oficial (dns.cs.umass.edu).</td><td><b>Transfere a responsabilidade</b> da resolução para o servidor contatado, que consulta o próximo e devolve a resposta pronta. Gera <b>maior carga nos servidores de maior altura</b> (os de cima da hierarquia).</td></tr>
+</table>
+
+<h3>10. Cache</h3>
+<p>Quando qualquer servidor aprende um mapeamento, ele o <b>guarda em cache local</b>, evitando consultar servidores de maior “altura”. As entradas têm <b>temporização</b>: somem depois de um tempo, geralmente <b>2 dias</b>. Como os servidores TLD ficam em geral no cache dos servidores locais, os <b>servidores raiz acabam sendo pouco visitados</b>.</p>
+
+<h3>11. Registros e mensagens do DNS</h3>
+<p>A base é feita de <b>registros de recursos (RR)</b> no formato <b>(nome, valor, tipo, TTL)</b>; o significado de nome e valor depende do tipo.</p>
 <table>
 <tr><th>Tipo</th><th>Nome</th><th>Valor</th></tr>
-<tr><td><b>A</b></td><td>nome de uma estação</td><td>seu endereço IP</td></tr>
-<tr><td><b>NS</b></td><td>domínio (ex.: ic.uff.br)</td><td>servidor oficial desse domínio</td></tr>
-<tr><td><b>CNAME</b></td><td>apelido (alias)</td><td>nome canônico (verdadeiro)</td></tr>
-<tr><td><b>MX</b></td><td>domínio</td><td>nome do servidor de correio do domínio</td></tr>
+<tr><td><b>A</b></td><td>nome de uma estação</td><td>o seu endereço IP</td></tr>
+<tr><td><b>NS</b></td><td>um domínio (ex.: ic.uff.br)</td><td>o servidor oficial de nomes daquele domínio</td></tr>
+<tr><td><b>CNAME</b></td><td>o “apelido” (alias)</td><td>o nome canônico (verdadeiro)</td></tr>
+<tr><td><b>MX</b></td><td>um domínio</td><td>o nome do servidor de correio do domínio</td></tr>
 </table>
-<p>Lendo a saída de <code>host -v www.ic.uff.br</code>:</p>
-<pre>www.ic.uff.br  CNAME
-  tangerina.ic.uff.br
-tangerina.ic.uff.br  A
-  200.20.15.38</pre>
-<p>Ou seja, <b>www.ic.uff.br é apelido (CNAME)</b> de tangerina.ic.uff.br, cujo registro A aponta para 200.20.15.38. A seção AUTHORITY lista os servidores NS do domínio e a ADDITIONAL traz os IPs deles. Pedido e resposta DNS têm o mesmo formato.</p>
+<p>O DNS é baseado em mensagens de <b>pedido e resposta</b>, que têm o <b>mesmo formato</b>. No exemplo do comando <code>host -v www.ic.uff.br</code> a resposta vem em seções:</p>
+<ul>
+<li><b>QUESTION</b>: a pergunta (<i>www.ic.uff.br</i>, tipo A);</li>
+<li><b>ANSWER</b>: a resposta (www.ic.uff.br é um <b>CNAME</b> para tangerina.ic.uff.br, que é <b>A</b> 200.20.15.38);</li>
+<li><b>AUTHORITY</b>: os servidores oficiais (registros <b>NS</b> de ic.uff.br);</li>
+<li><b>ADDITIONAL</b>: os IPs (registros <b>A</b>) desses servidores oficiais.</li>
+</ul>
+<div class="dica">Resolver nome → IP: o servidor local pergunta; os raiz, TLD e oficial respondem. Cache evita repetir a viagem. Registro A = nome → IP; CNAME = apelido → nome verdadeiro; MX = servidor de e-mail; NS = quem manda no domínio.</div>
 `
 },
+
 
 "redes-a7": {
-  resumo: "Sistemas par-a-par: por que escalam, as três formas de montar o índice (diretório central, hierarquia, DHT), como o BitTorrent distribui arquivos (tracker, rarest first, tit-for-tat) e como o Skype atravessa o NAT.",
+  resumo: "Como funcionam os sistemas par a par (P2P): por que escalam, o problema da busca (diretório central, hierarquia, DHT), o Pastry, o BitTorrent com seu olho por olho e o Skype com super-nós.",
   html: `
-<h3>1. Rede orientada ao usuário × ao conteúdo</h3>
-<ul>
-<li><b>Orientada ao usuário</b>: um usuário quer falar com <b>outro usuário</b> (telnet, FTP, SMTP).</li>
-<li><b>Orientada ao conteúdo</b>: quer-se um <b>dado ou serviço</b>, e não importa em que máquina ele está (P2P como o BitTorrent, redes de distribuição como a Akamai).</li>
-</ul>
-
-<h3>2. Por que o P2P escala</h3>
-<p>No cliente-servidor, o tempo para <b>todos</b> receberem uma cópia cresce <b>linearmente</b> com o número de usuários: o servidor é o gargalo. No P2P, <b>cada par que baixa também passa a servir</b>, então a capacidade total cresce junto com o número de participantes.</p>
-<div class="ex">Um professor entrega a mesma apostila a 100 alunos, um por vez: quanto mais alunos, mais tempo. Se cada aluno que já recebeu passa a entregar cópias aos outros, a fila acaba bem mais rápido.</div>
-<p>A ideia básica dos primeiros sistemas de compartilhamento: um par quer um arquivo → <b>busca</b> quem o tem (recebe uma lista) → escolhe um parceiro para enviar → enquanto recebe, também envia a quem interessar. <b>Um par é cliente e servidor temporário.</b> O problema crítico é a <b>busca</b>.</p>
-
-<h3>3. O índice: como saber onde está cada arquivo</h3>
-<p>O <b>índice</b> registra dinamicamente a localização dos arquivos compartilhados. Os pares informam o que têm e consultam para achar o que querem. A grande pergunta é <b>como construí-lo</b>.</p>
+<h3>1. Duas formas de pensar a rede</h3>
 <table>
-<tr><th>Abordagem</th><th>Como funciona</th><th>Problemas</th></tr>
-<tr><td><b>Diretório centralizado</b> (Napster)</td><td>o par conecta e informa IP e conteúdo ao servidor central; Alice pergunta pela música “Hey Jude” ao servidor e pede o arquivo direto a Bob</td><td>ponto único de falha, gargalo, violação de direitos autorais. A <b>transferência</b> é descentralizada, mas a <b>busca</b> é centralizada</td></tr>
-<tr><td><b>Hierarquia</b> (Gnutella)</td><td>cada par é líder de grupo ou pertence a um; TCP entre o par e seu líder e entre alguns líderes. O líder registra o conteúdo de todos os seus “filhos”</td><td>nenhum par conhece a localização de todos os arquivos, só parte</td></tr>
-<tr><td><b>DHT</b></td><td>tabela hash distribuída (veja abaixo)</td><td>—</td></tr>
+<tr><th>Rede orientada ao usuário</th><th>Rede orientada ao conteúdo</th></tr>
+<tr><td>um usuário quer <b>contatar outro usuário</b><br>exemplos: acesso a terminal remoto (telnet), transferência de arquivos (FTP), correio eletrônico (SMTP)</td><td>um usuário quer <b>acessar um serviço ou dado específico</b>; <b>não importa em que estação</b> ele está<br>exemplos: sistemas par a par (BitTorrent) e redes de distribuição de conteúdo (Akamai)</td></tr>
 </table>
+<div class="ex">Orientada ao usuário: ligar para um número de telefone. Orientada ao conteúdo: procurar “a receita do bolo X” sem se importar em qual site ela está.</div>
 
-<h3>4. DHT: tabela hash distribuída</h3>
-<p>A informação é guardada como pares <b>(chave, valor)</b>, por exemplo <code>(Led Zeppelin IV, 192.168.2.1)</code>. Os pares <b>buscam pela chave</b> e a DHT devolve o valor; também podem <b>inserir</b> pares.</p>
-<p>As chaves vêm de uma <b>função hash</b>, que dá: pequena chance de colisão (identificação única), <b>tamanho fixo</b>, espalhamento (distribui a carga) e, em algumas, impossibilidade de voltar à informação original.</p>
-<p>Cada par recebe um <b>identificador inteiro</b> em [0, 2<sup>n</sup>−1] (n bits), e cada chave também, pelo mesmo hash. Regra: a chave fica com o par de identificador <b>mais próximo, o sucessor imediato</b>.</p>
-<div class="ex">Com n = 4 (identificadores de 0 a 15) e pares {1, 3, 4, 5, 8, 10, 12, 14}: a chave <b>13</b> fica com o par <b>14</b>; a chave <b>15</b> “dá a volta” e fica com o par <b>1</b>.</div>
-<h4>Circular e com atalhos</h4>
+<h3>2. O que é um sistema par a par</h3>
+<p>Os participantes <b>colaboram</b> para o funcionamento e a manutenção do sistema, <b>compartilhando recursos</b>. Há duas versões:</p>
 <ul>
-<li><b>DHT circular</b>: cada par conhece só o <b>sucessor e o antecessor</b>, formando um anel (rede sobreposta, <i>overlay</i>). Resolver uma busca custa <b>O(N)</b> mensagens em média.</li>
-<li><b>Com atalhos</b>: cada par também conhece alguns outros. Isso reduz para <b>O(log N)</b> (no exemplo da aula, de 6 mensagens para 2).</li>
-<li><b>Pastry</b>: sistema recomendado para montar a rede sobreposta; estima a <b>proximidade</b> entre nós (saltos por traceroute, tempo de ida e volta por ping, vazão) para o overlay ficar próximo da rede real. Cada nó tem um identificador de 128 bits (hash do IP ou da chave pública) e a mensagem vai ao nó numericamente mais próximo da chave.</li>
+<li><b>Pura</b>: comunicação direta entre sistemas finais;</li>
+<li><b>Híbrida</b>: usa <b>servidores auxiliares</b> (exemplos: Skype, BitTorrent).</li>
+</ul>
+<p>Usos típicos: <b>compartilhamento de arquivos</b> (Napster, Gnutella, Emule, Limewire, BitTorrent) e <b>distribuição de conteúdo multimídia</b>, em áudio (Skype) e vídeo (SopCast, PPLive, PPStream, Joost).</p>
+<h4>Escalabilidade: cliente-servidor x P2P</h4>
+<p>O gráfico dos slides compara o <b>tempo para que todos os usuários recebam uma cópia de um arquivo</b>. No cliente-servidor, o tempo <b>cresce</b> conforme chegam mais usuários, porque o servidor precisa enviar uma cópia para cada um. No P2P ele <b>cresce bem menos</b>, porque cada novo participante que recebe o arquivo também passa a enviá-lo aos outros.</p>
+<div class="ex">Cliente-servidor: um professor tirando cópia para a turma inteira, uma por uma. P2P: cada aluno que recebe a cópia já tira uma para o colega ao lado.</div>
+
+<h3>3. Compartilhamento de arquivos: a ideia básica</h3>
+<ol>
+<li>Um par quer um arquivo (uma música, um vídeo, um programa).</li>
+<li>O primeiro passo é <b>encontrar quem o tem</b>: é a <b>busca</b>.</li>
+<li>Obtém-se uma <b>lista de parceiros</b>.</li>
+<li>Escolhe-se um parceiro, que envia o arquivo.</li>
+<li>Durante a recepção, o par também pode <b>enviar outros arquivos</b> a quem interessar. Um par é <b>cliente e servidor temporário</b> ao mesmo tempo.</li>
+</ol>
+<div class="ex">Alice abre o cliente P2P no notebook e pede “Hey Jude”. A aplicação mostra a lista de parceiros que têm a música. Alice escolhe o <b>Bob</b>, e o arquivo é copiado do PC de Bob para o notebook dela. Enquanto baixa, outros usuários podem estar pegando arquivos do computador de Alice.</div>
+<p>O <b>problema crítico</b> é a <b>busca por arquivos</b>.</p>
+
+<h3>4. Busca: como construir o índice</h3>
+<p>O <b>índice</b> registra dinamicamente as <b>localizações dos arquivos</b> compartilhados pelos pares: os pares informam ao índice o que possuem, e consultam o índice para descobrir onde encontrar os arquivos. Há três jeitos de construí-lo.</p>
+<h4>Diretório centralizado (Napster)</h4>
+<ol>
+<li>Quando um parceiro se conecta, informa ao <b>servidor de diretório central</b> o seu <b>endereço IP</b> e o seu <b>conteúdo</b>;</li>
+<li>Alice consulta o servidor sobre “Hey Jude”;</li>
+<li>Alice pede o arquivo diretamente a Bob.</li>
+</ol>
+<p>Problemas: <b>ponto único de falha</b>, <b>gargalo de desempenho</b> e <b>violação de direitos autorais</b>. Repare: a <b>transferência do arquivo é descentralizada</b>, mas a <b>busca é altamente centralizada</b>.</p>
+<h4>Hierarquia (exemplo: Gnutella)</h4>
+<p>O conhecimento da localização dos arquivos é <b>distribuído entre os pares</b>, e nenhum par conhece a localização de todos os arquivos.</p>
+<ul>
+<li>Cada par é um <b>líder de grupo</b> ou está ligado a um líder, por uma <b>conexão TCP</b>; alguns líderes também têm conexões TCP entre si.</li>
+<li>O líder mantém o <b>registro do conteúdo de todos os seus filhos</b>.</li>
+<li>Os líderes <b>só conhecem parte</b> da localização dos arquivos.</li>
+</ul>
+<h4>Tabelas hash distribuídas (DHT)</h4>
+<p>A informação é um par <b>(chave, valor)</b>. Exemplos: (1980, Igor); (Led Zeppelin IV, 192.168.2.1). Os pares <b>buscam pela chave</b> e a DHT devolve o valor associado; também podem <b>inserir</b> pares (chave, valor). As chaves vêm de uma <b>função hash</b>, que dá <b>identificação única</b> (pouca chance de colisão), <b>tamanho fixo</b> e <b>espalhamento</b> (distribui a carga). Algumas funções ainda garantem que não dá para voltar do hash à informação original.</p>
+<p><b>Identificadores</b>: cada par recebe um número inteiro de <b>n bits</b>, entre 0 e 2<sup>n</sup>−1, e cada chave também é um inteiro nesse intervalo (por exemplo, chave = h(“Led Zeppelin IV”)).</p>
+<p><b>Quem guarda cada chave?</b> A regra: o par com o <b>identificador mais próximo</b> do da chave, entendido como o <b>sucessor imediato</b>.</p>
+<div class="ex">Com n = 4 (identificadores de 0 a 15) e pares 1, 3, 4, 5, 8, 10, 12, 14: a <b>chave 13</b> fica com o par <b>14</b>; a <b>chave 15</b> “dá a volta” e fica com o par <b>1</b>.</div>
+<h4>DHT circular</h4>
+<p>Cada par conhece só o <b>sucessor imediato</b> e o <b>antecessor</b>, formando uma <b>rede sobreposta</b> (<i>overlay</i>). Para achar o responsável, a pergunta (“quem é responsável pela chave 1110?”) passa de par em par até chegar a quem é o sucessor imediato: <b>O(N)</b> mensagens, em média, com N pares.</p>
+<p><b>Com atalhos</b>: cada par sabe o endereço do antecessor, do sucessor e de <b>alguns outros pares</b>. Isso reduz o número de mensagens de O(N) para <b>O(log N)</b>. No exemplo dos slides, achar o responsável por uma chave leva <b>6 mensagens sem atalhos e 2 com atalhos</b>.</p>
+
+<h3>5. Exemplo de DHT: Pastry</h3>
+<ul>
+<li>Cada nó recebe um identificador de <b>128 bits</b>, obtido por função hash do <b>endereço IP</b> ou da <b>chave pública</b> do nó. Os identificadores ficam uniformemente distribuídos.</li>
+<li>Cada objeto tem uma chave de 128 bits.</li>
+<li>Dada uma mensagem e uma chave, a mensagem é encaminhada ao nó com identificador <b>numericamente mais próximo</b> da chave.</li>
+<li>O Pastry <b>estima a proximidade</b> entre os nós: cada nó mede sua distância até outro nó de IP conhecido, para que a rede sobreposta tenha caminhos <b>próximos aos da camada de rede</b>. A distância pode ser o <b>número de saltos</b> (traceroute), o <b>tempo de ida e volta</b> (ping) ou a <b>vazão</b> (par de pacotes).</li>
 </ul>
 
-<h3>5. BitTorrent</h3>
-<p>Ponto-chave: o arquivo é <b>dividido em pedaços</b> (de 256 KB) espalhados pelos pares. Isso reduz a complexidade da busca.</p>
+<h3>6. BitTorrent</h3>
+<p>Ponto-chave: os arquivos são <b>divididos em pedaços</b> (de <b>256 KB</b>) espalhados pelos pares. Vocabulário:</p>
+<table>
+<tr><th>Termo</th><th>Significado</th></tr>
+<tr><td><b>Torrent</b> ou <b>enxame</b> (<i>swarm</i>)</td><td>o grupo de pares que trocam pedaços de um arquivo</td></tr>
+<tr><td><b>Tracker</b> (rastreador)</td><td>registra os pares participantes de um torrent</td></tr>
+<tr><td><b>Arquivo .torrent</b></td><td>traz o endereço do tracker; como obtê-lo está <b>fora do escopo do protocolo</b></td></tr>
+<tr><td><b>Seeder</b> (semeador)</td><td>par que tem <b>todos</b> os pedaços do arquivo</td></tr>
+<tr><td><b>Leecher</b> (sanguessuga)</td><td>par que ainda está <b>baixando</b> pedaços</td></tr>
+</table>
+<p>A vantagem é <b>reduzir a complexidade da busca</b>: quem quer o arquivo já chega com o .torrent. Como um nó N entra:</p>
+<ol>
+<li>obtém o arquivo <b>.torrent</b>, que traz o endereço do tracker;</li>
+<li>se <b>registra no tracker</b>;</li>
+<li>o tracker envia uma <b>lista de possíveis vizinhos</b> (A, B, C, D);</li>
+<li>N escolhe <b>aleatoriamente</b> um subconjunto e envia mensagens para estabelecer a vizinhança; se a resposta for positiva, os enlaces são criados e os nós viram vizinhos.</li>
+</ol>
+<p><b>Troca de pedaços</b>:</p>
 <ul>
-<li><b>Torrent (enxame, <i>swarm</i>)</b>: grupo de pares trocando pedaços de um arquivo.</li>
-<li><b>Tracker</b>: registra os pares do torrent. Seu endereço vem no arquivo <b>.torrent</b>; como obtê-lo está fora do protocolo.</li>
+<li>o recém-chegado <b>não tem nenhum pedaço</b>, mas acumula com o tempo; enquanto baixa, <b>também envia</b> pedaços a outros;</li>
+<li>a troca é feita <b>somente entre os pares</b>;</li>
+<li>periodicamente, o par (Alice) recebe de seus vizinhos <b>a lista de pedaços que eles possuem</b> (um mapa);</li>
+<li>Alice pede os pedaços que ainda não tem, <b>os mais raros primeiro</b>;</li>
+<li>o pedaço recebido é guardado no buffer.</li>
 </ul>
-<p><b>Entrada no enxame</b>: (1) o nó obtém o .torrent; (2) registra-se no tracker; (3) recebe uma lista de possíveis vizinhos; (4) escolhe um subconjunto ao acaso; (5) pede para ser vizinho; (6) se aceito, o enlace é criado.</p>
+<p>O problema: pares <b>entram e saem</b> do enxame. Ao obter o arquivo inteiro, o par pode sair (<b>egoisticamente</b>) ou permanecer (<b>altruisticamente</b>).</p>
+<h4>Olho por olho (<i>tit-for-tat</i>)</h4>
 <ul>
-<li><b>Seeders</b> (semeadores): têm todos os pedaços.</li>
-<li><b>Leechers</b> (sanguessugas): ainda estão baixando; mesmo assim já enviam os pedaços que têm.</li>
+<li>Cada par tem <b>até 4 vizinhos</b>, e os pedaços são trocados só entre eles.</li>
+<li>Um par só deve continuar enviando pedaços aos vizinhos que <b>mais enviam</b> pedaços a ele.</li>
+<li>Os vizinhos são <b>reavaliados a cada 10 s</b>, conforme o número de pedaços recebidos.</li>
+<li>O vizinho que <b>menos envia</b> (o pior) é <b>substituído a cada 30 s</b>: o par escolhe outro <b>aleatoriamente</b> e começa a enviar pedaços a ele. É a <b>seleção otimista</b> (<i>optimistically unchoke</i>), porque não se sabe se o novo será melhor que o atual pior.</li>
 </ul>
-<h4>Quais pedaços pedir: o mais raro primeiro</h4>
-<p>Periodicamente o par recebe dos vizinhos o <b>mapa de pedaços</b> que eles têm e pede primeiro os <b>mais raros</b> (<i>rarest first</i>), para maximizar a disponibilidade no enxame.</p>
-<h4>Olho por olho (tit-for-tat)</h4>
-<ul>
-<li>Cada par tem <b>até 4 vizinhos</b>; os pedaços só são trocados entre vizinhos.</li>
-<li>Um par só continua enviando a quem <b>mais envia a ele</b>.</li>
-<li>Reavaliação <b>a cada 10 s</b>; o <b>pior</b> vizinho é trocado <b>a cada 30 s</b>.</li>
-<li>O par escolhe ao acaso outro par e começa a enviar: <b>seleção otimista</b> (<i>optimistically unchoke</i>), pois não sabe se o novo será melhor.</li>
-</ul>
-<div class="dica">Com mais velocidade de <b>upload</b>, o par encontra parceiros melhores e baixa mais rápido: quem dá, recebe.</div>
-<p><b>O que ainda falha</b>: o novo vizinho pode enviar menos que o pior atual; pode ser um <b>caroneiro</b> (<i>free-rider</i>: só recebe); e os pares entram e saem quando quiserem, e quem termina o download pode sair egoisticamente ou ficar como seeder.</p>
+<p>Alice seleciona Bob de forma otimista; Alice se torna um dos quatro melhores provedores de Bob, e Bob age da mesma forma, tornando-se um dos quatro melhores de Alice. Com <b>taxa de upload mais alta</b>, o par pode achar <b>melhores parceiros de troca</b> e obter o arquivo mais rápido.</p>
+<p>Problemas que sobram: e se o novo vizinho enviar menos que o atual pior? E se for um <b>caroneiro</b> (<i>free-rider</i>), que só recebe e não envia nada?</p>
+<div class="ex">Troca de figurinhas: você continua dando figurinhas para quem mais te dá. De vez em quando testa um desconhecido, na esperança de que ele seja um bom parceiro. Quem só recebe e nunca dá é o caroneiro.</div>
 
-<h3>6. Skype</h3>
+<h3>7. Skype</h3>
 <ul>
-<li>Protocolo <b>proprietário</b> da aplicação (funcionamento estimado por engenharia reversa); a comunicação entre usuários é <b>P2P</b>.</li>
-<li><b>Overlay hierárquico com super-nós</b> (SNs): o índice, que mapeia nomes de usuário em IPs, fica distribuído entre os SNs; há também um servidor de login.</li>
-<li><b>Problema do NAT</b>: ele impede que um par de fora inicie uma chamada com um par de dentro. <b>Solução</b>: <b>intermediários (relays)</b>, escolhidos via os SNs de Alice e de Bob; cada par inicia a sessão com o relay e a conversa atravessa os dois NATs por ele.</li>
+<li>É um <b>protocolo proprietário</b> da camada de aplicação; o funcionamento foi <b>estimado por engenharia reversa</b>.</li>
+<li>A <b>comunicação entre os usuários é P2P</b>.</li>
+<li>O <b>índice</b>, que mapeia nomes de usuários em endereços IP, é um <b>overlay hierárquico distribuído</b> pelos <b>super-nós (SNs)</b>. Há clientes Skype (SC), super-nós e um servidor de login.</li>
 </ul>
+<p><b>O problema do NAT</b>: quando Alice e Bob estão atrás de NATs, o NAT <b>impede que um par externo inicie uma chamada</b> com um par interno. A solução é usar um <b>intermediário (relay)</b>, escolhido por meio dos SNs de Alice e de Bob. Cada par inicia a sessão com o intermediário, e eles se comunicam através dele.</p>
+<div class="dica">P2P: quem baixa também envia. Busca por diretório central = simples, mas frágil. Hierarquia = busca em grupos. DHT = busca por chave, em O(log N) com atalhos. BitTorrent evita a busca com o tracker e usa olho por olho para incentivar a cooperação.</div>
 `
 },
+
 
 "redes-a8910": {
   resumo: "Camada de transporte: portas e sockets, multiplexação, UDP (cabeçalho e checksum), como construir um canal confiável sobre um canal que erra e perde (ACK, número de sequência, temporizador, paralelismo) e as características do TCP.",
