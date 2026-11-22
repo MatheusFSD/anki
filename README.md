@@ -1,15 +1,16 @@
-# Anki UFF — GPMS & Redes
+# Anki UFF — GPMS, Redes & Projeto
 
 Aplicativo web de flashcards com **repetição espaçada** (algoritmo SM-2, no estilo do Anki),
-gerado a partir dos slides e listas de exercícios de duas disciplinas da UFF.
+gerado a partir dos slides e listas de exercícios de três disciplinas da UFF.
 
-**614 cartões**, organizados por matéria → aula. Algumas aulas também têm um **resumo em
+**762 cartões**, organizados por matéria → aula. Algumas aulas também têm um **resumo em
 linguagem simples**, com exemplos do dia a dia, na aba **Resumos** (veja [abaixo](#resumos-das-aulas)).
 
 | Matéria | Código | Aulas | Cartões | Resumos |
 |---|---|---|---|---|
 | Gerência de Projetos e Manutenção de Software | TCC00363 | 17 | 358 | Aulas 8 a 14 |
 | Redes de Computadores para Sistemas de Informação | TCC00359 | 12 | 256 | 8 aulas (slides) |
+| Projeto de Software | TCC00338 | 4 | 148 | 4 (todas as aulas) |
 
 ## Como funciona
 
@@ -49,6 +50,15 @@ com os 20 exercícios resolvidos (os slides trazem só os enunciados; as respost
 
 Em **Redes** há resumo das 8 aulas de slides: aulas 1–3, 4–5, 6, 7, 8–10, 11–14, 15 e 16. As duas listas do
 Kurose (caps. 1 e 2) e as listas de **Endereçamento** e de **Camada de rede** (exercícios 1 a 13, resolvidos) ficam só como cartões. Os resumos foram escritos a partir do texto dos slides de cada aula.
+
+Em **Projeto de Software** há resumo das 4 aulas: **Arquitetura 1** (requisitos arquiteturais, cenários de
+qualidade, ISO 25010, táticas), **Arquitetura 2** (estilos, trade-offs, visões 4+1, ADRs e o
+`docs/arquitetura.md`), **SOLID 1** (revisão de OO e UML, SRP e OCP, com código Java) e **Exercícios**, uma
+página de perguntas e respostas com os exercícios dos slides resolvidos (delivery, "E se…?", escolha de estilo,
+trade-offs, ADR, SRP/OCP). Os slides trazem só os enunciados; as respostas são resolução própria, e o
+código do exercício em duplas de SRP + OCP não estava no texto dos slides (usei um exemplo equivalente).
+Trechos marcados como **complemento** vêm de pesquisa fora dos slides (ex.: o refinamento do SRP por "ator",
+o formato de ADR de Nygard, a ordem de 2011 → 2023 da ISO 25010).
 
 ## Progresso (sem banco de dados)
 
@@ -148,8 +158,10 @@ index.html            estrutura da página
 css/style.css         estilos (mobile first, tema claro/escuro)
 js/data-gpms.js       358 cartões de GPMS
 js/data-redes.js      256 cartões de Redes
+js/data-projeto.js    148 cartões de Projeto de Software (Arquitetura, SOLID, exercícios)
 js/resumos-gpms.js    resumos em linguagem simples das aulas de GPMS
 js/resumos-redes.js   resumos em linguagem simples das aulas de Redes
+js/resumos-projeto.js resumos em linguagem simples das aulas de Projeto de Software
 js/sync.js            leitura/escrita do JSON no repositório (API do GitHub)
 js/app.js             agendador SM-2, telas e persistência
 dados/progresso.json  progresso sincronizado
@@ -158,7 +170,7 @@ dados/progresso.json  progresso sincronizado
 
 ## Editar ou adicionar cartões
 
-Os cartões ficam em `js/data-gpms.js` e `js/data-redes.js`:
+Os cartões ficam em `js/data-gpms.js`, `js/data-redes.js` e `js/data-projeto.js`:
 
 ```js
 {q:"Pergunta em <b>HTML</b>", a:"Resposta em <b>HTML</b>", t:"Tópico"}
@@ -183,4 +195,4 @@ Em `js/resumos-gpms.js`, a chave é o `id` da aula em `data-gpms.js` (ex.: `"gpm
 
 O `html` aceita `<h3>`, `<h4>`, `<p>`, listas, `<table>`, `<code>` e `<pre>`. Dentro de um `<pre>`,
 escreva a barra invertida em dobro (`\\`), por causa dos *template literals*. Para outra matéria,
-crie um arquivo parecido e ligue-o em `app.js` e no `index.html` do mesmo jeito que `RESUMOS_GPMS` e `RESUMOS_REDES`.
+crie um arquivo parecido e ligue-o em `app.js` e no `index.html` do mesmo jeito que `RESUMOS_GPMS`, `RESUMOS_REDES` e `RESUMOS_PROJETO`.

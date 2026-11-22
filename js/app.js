@@ -2,7 +2,7 @@
    Anki UFF — SRS (SM-2) + progresso em JSON no localStorage
    ============================================================ */
 
-const SUBJECTS = [GPMS, REDES];
+const SUBJECTS = [GPMS, REDES, PROJETO];
 
 // resumos em linguagem simples (aba "Resumos"): cada aula pode ter o seu
 if (typeof RESUMOS_GPMS !== "undefined"){
@@ -10,6 +10,9 @@ if (typeof RESUMOS_GPMS !== "undefined"){
 }
 if (typeof RESUMOS_REDES !== "undefined"){
   for (const l of REDES.lessons) if (RESUMOS_REDES[l.id]) l.resumo = RESUMOS_REDES[l.id];
+}
+if (typeof RESUMOS_PROJETO !== "undefined"){
+  for (const l of PROJETO.lessons) if (RESUMOS_PROJETO[l.id]) l.resumo = RESUMOS_PROJETO[l.id];
 }
 const STORE_KEY = "ankiuff.progress.v1";
 const CFG_KEY   = "ankiuff.config.v1";
@@ -283,7 +286,7 @@ function renderHome(){
   <div class="hero">
     <div class="masthead">Anki UFF</div>
     <div class="dateline">
-      <span>GPMS</span><span>Redes</span><span>UFF</span>
+      <span>GPMS</span><span>Redes</span><span>Projeto</span><span>UFF</span>
     </div>
     <h1>${saudacao()}</h1>
     <p>${c.total} cartões · ${c.aprendidos} já aprendidos</p>
