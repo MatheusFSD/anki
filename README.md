@@ -3,14 +3,14 @@
 Aplicativo web de flashcards com **repetição espaçada** (algoritmo SM-2, no estilo do Anki),
 gerado a partir dos slides e listas de exercícios de três disciplinas da UFF.
 
-**861 cartões**, organizados por matéria → aula. Algumas aulas também têm um **resumo em
+**939 cartões**, organizados por matéria → aula. Algumas aulas também têm um **resumo em
 linguagem simples**, com exemplos do dia a dia, na aba **Resumos** (veja [abaixo](#resumos-das-aulas)).
 
 | Matéria | Código | Aulas | Cartões | Resumos |
 |---|---|---|---|---|
 | Gerência de Projetos e Manutenção de Software | TCC00363 | 17 | 358 | Aulas 8 a 14 |
 | Redes de Computadores para Sistemas de Informação | TCC00359 | 12 | 256 | 8 aulas (slides) |
-| Projeto de Software | TCC00338 | 6 | 247 | 6 (todas as aulas) |
+| Projeto de Software | TCC00338 | 7 | 325 | 7 (todas as aulas) |
 
 ## Como funciona
 
@@ -51,7 +51,7 @@ com os 20 exercícios resolvidos (os slides trazem só os enunciados; as respost
 Em **Redes** há resumo das 8 aulas de slides: aulas 1–3, 4–5, 6, 7, 8–10, 11–14, 15 e 16. As duas listas do
 Kurose (caps. 1 e 2) e as listas de **Endereçamento** e de **Camada de rede** (exercícios 1 a 13, resolvidos) ficam só como cartões. Os resumos foram escritos a partir do texto dos slides de cada aula.
 
-Em **Projeto de Software** há resumo das 6 aulas: **Arquitetura 1** (requisitos arquiteturais, cenários de
+Em **Projeto de Software** há resumo das 7 aulas: **Arquitetura 1** (requisitos arquiteturais, cenários de
 qualidade, ISO 25010, táticas), **Arquitetura 2** (estilos, trade-offs, visões 4+1, ADRs e o
 `docs/arquitetura.md`), **SOLID 1** (revisão de OO e UML, SRP e OCP, com código Java), **SOLID 2** (LSP, ISP e
 DIP: aves e documentos, interfaces segregadas, lembrete de senha com injeção de dependência, LSP × ISP, o
@@ -59,11 +59,13 @@ trade-off, o exercício da loja e os avisos do trabalho em grupo), **Exercícios
 respostas com os exercícios dos slides resolvidos (delivery, "E se…?", escolha de estilo, trade-offs, ADR,
 SRP/OCP), e a **Aula 9 — Frameworks** (definição, características, exemplos de back-end e front-end, tipos
 horizontal/vertical, caixa-branca/preta/cinza, framework × biblioteca × padrões, hot spots e frozen spots, custo-benefício
-e como construir um framework). Os slides trazem só os enunciados dos exercícios; as respostas são resolução
+e como construir um framework) e **Padrões de Projeto (GoF)** (histórico com Alexander e a gang of four, os quatro
+elementos de um padrão, anti-padrões, o catálogo dos 23 padrões por propósito e escopo e, em detalhe e com código,
+Façade, Singleton e Observer). Os slides trazem só os enunciados dos exercícios; as respostas são resolução
 própria, e o código do exercício em duplas de SRP + OCP e o da loja (SOLID 2) não estavam no texto dos slides
 (usei exemplos equivalentes). Trechos marcados como **complemento** vêm de pesquisa fora dos slides (ex.: o
 refinamento do SRP por "ator", o formato de ADR de Nygard, a ordem de 2011 → 2023 da ISO 25010, o exemplo
-Quadrado × Retângulo e o projeto por contrato no LSP, DIP × injeção de dependência, o Template Method nos hot spots).
+Quadrado × Retângulo e o projeto por contrato no LSP, DIP × injeção de dependência, o Template Method nos hot spots, a ligação do Singleton com o DIP, o exemplo de Magic Number).
 
 ## Progresso (sem banco de dados)
 
@@ -163,7 +165,7 @@ index.html            estrutura da página
 css/style.css         estilos (mobile first, tema claro/escuro)
 js/data-gpms.js       358 cartões de GPMS
 js/data-redes.js      256 cartões de Redes
-js/data-projeto.js    247 cartões de Projeto de Software (Arquitetura, SOLID 1 e 2, exercícios, Frameworks)
+js/data-projeto.js    325 cartões de Projeto de Software (Arquitetura, SOLID 1 e 2, exercícios, Frameworks, GoF)
 js/resumos-gpms.js    resumos em linguagem simples das aulas de GPMS
 js/resumos-redes.js   resumos em linguagem simples das aulas de Redes
 js/resumos-projeto.js resumos em linguagem simples das aulas de Projeto de Software

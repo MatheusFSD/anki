@@ -1,6 +1,6 @@
 /* Projeto de Software — resumos das aulas, em linguagem simples (aba "Resumos").
    A chave é o id da aula em data-projeto.js. Mesmo formato de resumos-gpms.js.
-   Escritos a partir do texto dos slides (Arquitetura: aulas 1 e 2; SOLID: partes 1 e 2; Aula 9: Frameworks).
+   Escritos a partir do texto dos slides (Arquitetura: aulas 1 e 2; SOLID: partes 1 e 2; Aula 9: Frameworks; Padrões GoF).
    Trechos marcados como "complemento" vêm de pesquisa fora dos slides. */
 const RESUMOS_PROJETO = {
 
@@ -929,6 +929,252 @@ class ProcessadorLojaX extends ProcessadorDePedido {
 <li><b>não existe um melhor framework</b>.</li>
 </ul>
 <div class="dica">Ligação com a aula de SOLID 2 (fora dos slides): a inversão de controle é o <b>DIP em escala grande</b> (o framework, de alto nível, depende de abstrações que o seu código implementa; o Spring faz a injeção de dependência por você). Hot spots e frozen spots lembram o <b>OCP</b>: aberto para extensão nos ganchos, fechado para modificação no resto.</div>
+`
+},
+
+"proj-gof": {
+  resumo: "O que é um padrão de projeto, o histórico (Alexander e o GoF), os quatro elementos, o catálogo dos 23 padrões, e três padrões em detalhe com código: Façade, Singleton e Observer. Inclui anti-padrões, evolução dos padrões e os avisos do seminário.",
+  html: `
+<h3>1. O problema que leva aos padrões</h3>
+<p>Imagine um app de navegação que planeja rotas de <b>carro, a pé, transporte público, bicicleta, atrações turísticas…</b>. Uma primeira versão põe tudo num <code>if / else if</code> dentro da classe <code>Navegador</code>:</p>
+<pre>class Navegador {
+    Rota planejar(Modo modo, Local a, Local b) {
+        if (modo == CARRO)        { /* ... */ }
+        else if (modo == A_PE)    { /* ... */ }
+        else if (modo == ONIBUS)  { /* ... */ }
+        // e agora: bicicleta? turismo?
+    }
+}</pre>
+<p>Cada novo modo <b>mexe na mesma classe</b>. Isso fere o <b>OCP</b> (para estender é preciso modificar) e o <b>SRP</b> (a classe tem um motivo de mudança por modo). A saída é criar uma abstração <code>EstrategiaDeRota</code> com um método <code>rota(a, b)</code>, uma classe para cada modo (<code>RotaCarro</code>, <code>RotaAPe</code>, <code>RotaOnibus</code>) e fazer o <code>Navegador</code> usar a estratégia escolhida.</p>
+<p>O mesmo desenho resolve o <b>comportamento de inimigos num jogo</b> (<code>Inimigo</code> tem um <code>Comportamento</code> com <code>agir()</code>, implementado por <code>Atacar</code>, <code>Fugir</code>, <code>Patrulhar</code>) e outros contextos: <b>pagamento</b> (cartão, Pix, boleto), <b>compressão</b> (ZIP, GZIP, 7z), <b>ordenação</b> (preço, nome, data). Quando a mesma solução serve em contextos diferentes, ela é um <b>padrão de projeto</b>. Este é o <b>Strategy</b>.</p>
+<pre>interface EstrategiaDeRota { Rota rota(Local a, Local b); }
+class RotaCarro  implements EstrategiaDeRota { /* ... */ }
+class RotaAPe    implements EstrategiaDeRota { /* ... */ }
+
+class Navegador {
+    private EstrategiaDeRota estrategia;          // o "contexto" guarda a estratégia
+    Navegador(EstrategiaDeRota e) { this.estrategia = e; }
+    Rota planejar(Local a, Local b) { return estrategia.rota(a, b); }
+}
+// o cliente escolhe: new Navegador(new RotaAPe())</pre>
+
+<h3>2. O que é um padrão de projeto</h3>
+<p>Uma <b>solução recorrente e comprovada</b> que pode ser usada para resolver um <b>problema similar em diferentes contextos</b>. Três pilares:</p>
+<table>
+<tr><th>Pilar</th><th>Significa</th></tr>
+<tr><td><b>Problema recorrente</b></td><td>ocorre repetidas vezes, em sistemas e domínios diferentes</td></tr>
+<tr><td><b>Núcleo da solução</b></td><td><b>não é algoritmo</b> nem código pronto: descreve a ideia e a estrutura</td></tr>
+<tr><td><b>Reuso de experiência</b></td><td>conhecimento de pessoas experientes, nomeado e documentado</td></tr>
+</table>
+<div class="ex">Pense numa receita flexível: diz o que combinar e em que ordem, mas cada cozinha adapta os ingredientes. Ninguém copia a receita linha a linha, e ninguém precisa reinventar o bolo.</div>
+
+<h3>3. Histórico</h3>
+<ul>
+<li><b>1977</b>: Christopher Alexander apresenta a ideia de padrões na <b>arquitetura de prédios e cidades</b>: cada padrão descreve um problema que ocorre repetidas vezes e o núcleo da solução, para usar “milhões de vezes sem usá-la do mesmo modo duas vezes”. Inspirações: <i>The Timeless Way of Building</i> e <i>A Pattern Language</i>;</li>
+<li><b>Riehle e Zullighoven (1996)</b>: a abstração de uma forma concreta que ocorre muitas vezes em contextos específicos não arbitrários;</li>
+<li><b>Coplien (1996)</b>: resolve um problema, é um conceito provado, a solução não é óbvia, descreve um relacionamento e tem componente humano significativo;</li>
+<li><b>1994</b>: o livro <i>Design Patterns: Elements of Reusable Object-Oriented Software</i>, da <b>“gang of four” (GoF)</b>: Erich Gamma, Richard Helm, Ralph Johnson e John Vlissides.</li>
+</ul>
+<p>O GoF define padrão como a “descrição de objetos e classes que se comunicam, adaptados para resolver um problema de projeto geral em um contexto particular”. Fowler et al. (2002): “uma solução particular, tão comum quanto efetiva em lidar com um ou mais problemas recorrentes”.</p>
+<table>
+<tr><th>Estilos arquiteturais</th><th>Padrões de projeto</th></tr>
+<tr><td>organizam o <b>sistema</b> em componentes e conectores (camadas, MVC, publish/subscribe)</td><td>organizam <b>classes e objetos dentro de um componente</b> (contexto mais específico, abstração mais baixa)</td></tr>
+</table>
+
+<h3>4. Benefícios e os quatro elementos de um padrão</h3>
+<p><b>Benefícios:</b> soluções testadas e comprovadas (vantagem inicial, evita imprevistos, não reinventa a roda); <b>terminologia comum</b> (é mais fácil dizer “poderíamos usar um Singleton aqui”); e <b>nível de abstração</b> do problema (não lida com detalhes cedo demais). Os padrões se apoiam em princípios de projeto como abstração, encapsulamento, modularização, acoplamento e coesão, e separação entre interface e implementação.</p>
+<table>
+<tr><th>#</th><th>Elemento</th><th>O que descreve</th><th>No Strategy</th></tr>
+<tr><td>1</td><td><b>Nome</b></td><td>identificador que aumenta o vocabulário e melhora a comunicação</td><td>Strategy</td></tr>
+<tr><td>2</td><td><b>Problema</b></td><td>quando aplicar: contexto e condições</td><td>permitir que algoritmos alternativos sejam usados em tempo de execução</td></tr>
+<tr><td>3</td><td><b>Solução</b></td><td>elementos, relacionamentos, responsabilidades e colaborações (abstrata, sem implementação)</td><td>abstração com várias implementações; o Contexto guarda uma referência; o cliente passa a estratégia</td></tr>
+<tr><td>4</td><td><b>Consequências</b></td><td>custos e benefícios (flexibilidade, extensibilidade, portabilidade)</td><td>+ desacoplamento e OCP; − mais classes, cliente precisa conhecer as estratégias, exagero em problemas simples</td></tr>
+</table>
+
+<h3>5. Cuidados: padrões não são receita</h3>
+<table>
+<tr><th>Risco</th><th>O que é</th></tr>
+<tr><td><b>Excesso de engenharia</b></td><td>mais classes e indireção em sistema pequeno (o mesmo trade-off do SOLID)</td></tr>
+<tr><td><b>Padrão forçado</b></td><td>aplicar sem ter o problema que ele resolve só complica o código</td></tr>
+<tr><td><b>Anti-padrões</b></td><td>soluções ruins que parecem boas</td></tr>
+</table>
+<div class="dica">Comece pelo <b>problema</b> e escolha o padrão depois.</div>
+<table>
+<tr><th>Anti-padrão</th><th>O que é</th></tr>
+<tr><td><b>God Object</b></td><td>uma classe com funcionalidades demais, grande e difícil de entender, manter e testar</td></tr>
+<tr><td><b>Spaghetti Code</b></td><td>código desorganizado, com fluxo de controle difícil de seguir</td></tr>
+<tr><td><b>Magic Numbers</b></td><td>números soltos no código (ex.: <code>total * 0.15</code>) em vez de constantes com nome (<code>TAXA_SERVICO</code>)</td></tr>
+<tr><td><b>Not Invented Here</b></td><td>rejeitar soluções existentes e reinventar a roda</td></tr>
+</table>
+
+<h3>6. O catálogo GoF: 23 padrões</h3>
+<p>Classificados por <b>propósito</b> (o que fazem) e por <b>escopo</b> (classe ou objeto):</p>
+<table>
+<tr><th>Propósito</th><th>Trata de</th></tr>
+<tr><td><b>Criacionais</b></td><td>a criação de objetos; tornam o sistema independente de como os objetos são criados, compostos e representados</td></tr>
+<tr><td><b>Estruturais</b></td><td>compor classes e objetos em estruturas maiores (herança, agregação, composição)</td></tr>
+<tr><td><b>Comportamentais</b></td><td>algoritmos e a distribuição de responsabilidades entre objetos</td></tr>
+</table>
+<table>
+<tr><th>Escopo</th><th>Relações</th><th>Quando muda</th><th>Exemplos</th></tr>
+<tr><td><b>Classe</b></td><td>entre classes e subclasses (herança)</td><td>estáticas, fixas na compilação</td><td>Factory Method, Template Method, Adapter (de classe)</td></tr>
+<tr><td><b>Objeto</b></td><td>entre objetos (composição e referências)</td><td>dinâmicas, mudam em execução</td><td>Façade, Singleton, Observer, Strategy</td></tr>
+</table>
+<table>
+<tr><th></th><th>Criação</th><th>Estrutura</th><th>Comportamento</th></tr>
+<tr><td><b>Classe</b></td><td>Factory Method</td><td>Adapter (classe)</td><td>Interpreter, Template Method</td></tr>
+<tr><td><b>Objeto</b></td><td>Abstract Factory, Builder, Prototype, Singleton</td><td>Adapter (objeto), Bridge, Composite, Decorator, Façade, Flyweight, Proxy</td><td>Chain of Responsibility, Command, Iterator, Mediator, Memento, Observer, State, Strategy, Visitor</td></tr>
+</table>
+<p>O Adapter aparece duas vezes (classe e objeto) mas é um padrão só: 5 + 7 + 11 = <b>23</b>. Em sala foram vistos <b>três</b> (Façade, Singleton e Observer); os outros <b>20</b> ficam para o seminário em vídeo.</p>
+<p>No livro, cada padrão é descrito em <b>13 itens</b>, que a aula agrupa em três momentos:</p>
+<table>
+<tr><th>Entender</th><th>Projetar</th><th>Aplicar</th></tr>
+<tr><td>Nome · Intenção · Também conhecido como · Motivação · Aplicabilidade</td><td>Estrutura · Participantes · Colaborações</td><td>Consequências · Implementação · Exemplo de código · Usos conhecidos · Padrões relacionados</td></tr>
+</table>
+
+<h3>7. Façade (Fachada) — estrutural, escopo de objeto</h3>
+<div class="ex"><b>Analogia:</b> a central de atendimento de uma loja. O cliente fala só com ela; ela resolve ou direciona para Vendas, Estoque, Financeiro ou Entrega. Os departamentos continuam existindo.</div>
+<p><b>Problema:</b> para usar uma biblioteca ou framework sofisticado, o código precisa inicializar vários objetos, rastrear dependências e chamar métodos na ordem certa. A lógica de negócio fica acoplada aos detalhes de classes de terceiros. <b>Solução:</b> uma classe com uma <b>interface simples</b> para o subsistema, com apenas o que o cliente usa. <b>Intenção:</b> fornecer uma interface unificada para um conjunto de interfaces de um subsistema, de nível mais alto, que o torna mais fácil de usar.</p>
+<p><b>Aplicável</b> para dar uma interface simples a um subsistema complexo, quando há muitas dependências entre clientes e classes de implementação, ou para colocar subsistemas em camadas. Exemplo clássico: um <code>Compiler</code> que expõe só <code>compile()</code>, escondendo <code>Scanner</code>, <code>Parser</code>, <code>CodeGenerator</code> etc.</p>
+<p>Exemplo do conversor de vídeo. <b>Sem fachada</b>, o cliente conhece cinco classes e todo cliente muda se o codec muda:</p>
+<pre>VideoFile file = new VideoFile("clip.ogg");
+Codec origem = new CodecFactory().extract(file);
+Codec destino = new MPEG4CompressionCodec();
+Buffer buf = BitrateReader.read(file, origem);
+Buffer res = BitrateReader.convert(buf, destino);
+res = new AudioMixer().fix(res);
+// ... e ainda salvar o arquivo</pre>
+<p><b>Com fachada</b>, o cliente conhece uma classe, e trocar o codec muda só a fachada:</p>
+<pre>class VideoConverter {
+    File converter(String arq, String fmt) {
+        VideoFile file = new VideoFile(arq);
+        Codec origem = new CodecFactory().extract(file);
+        Codec destino = fmt.equals("mp4")
+            ? new MPEG4CompressionCodec()
+            : new OggCompressionCodec();
+        Buffer buf = BitrateReader.read(file, origem);
+        Buffer res = BitrateReader.convert(buf, destino);
+        res = new AudioMixer().fix(res);
+        return new File(res);
+    }
+}
+// cliente
+File f = new VideoConverter().converter("clip.ogg", "mp4");</pre>
+<table>
+<tr><th>Vantagens</th><th>Desvantagens e limites</th></tr>
+<tr><td>menos objetos para o cliente lidar<br>acoplamento fraco entre subsistema e clientes<br>mudanças internas ficam atrás da fachada<br>não impede o uso direto (facilidade × generalidade)</td><td>pode esconder demais<br>fachada sobrecarregada vira <b>God Object</b> e viola o SRP<br>ruim quando o cliente precisa de controle fino<br>overhead de repassar muitas chamadas</td></tr>
+</table>
+<p><b>Usos:</b> frameworks web (Django, Rails), bibliotecas com uma classe de entrada para uma API grande. <b>Relacionados:</b> <b>Adapter</b> torna utilizável uma interface existente, enquanto a fachada define uma <b>nova</b> interface para um subsistema inteiro; <b>Mediator</b> também abstrai a comunicação, mas é bidirecional (a fachada é unidirecional); <b>Abstract Factory</b> é alternativa se só for preciso esconder a criação; <b>Singleton</b>: normalmente basta uma fachada.</p>
+
+<h3>8. Singleton — criacional, escopo de objeto</h3>
+<div class="ex"><b>Analogia:</b> o governo. Um país tem apenas um governo oficial. Independente das pessoas que o compõem, “O Governo de X” é o ponto de acesso global a esse grupo.</div>
+<p><b>Intenção:</b> garantir que uma classe tenha <b>somente uma instância</b> e fornecer um <b>ponto global de acesso</b> a ela (spooler de impressão, sistema de arquivos, gerenciador de janelas, um único objeto de banco de dados). Ele resolve <b>dois problemas</b> de uma vez, o que fere o SRP: (1) garantir uma única instância, geralmente para controlar o acesso a um recurso compartilhado; (2) dar um ponto de acesso global, como uma variável global, mas <b>protegida</b> contra sobrescrita.</p>
+<p><b>Solução:</b> construtor <b>privado</b> e um <b>método estático</b> que age como construtor: cria o objeto na primeira chamada e devolve o existente nas seguintes. Com várias threads, usa-se um <b>lock</b> e uma segunda verificação:</p>
+<pre>class Database {
+    private static Database instance;                // campo estático
+
+    private Database() {                             // construtor privado
+        // conexão real com o servidor de banco de dados
+    }
+
+    public static Database getInstance() {
+        if (instance == null) {
+            synchronized (Database.class) {          // lock de thread
+                if (instance == null) {              // checa de novo
+                    instance = new Database();
+                }
+            }
+        }
+        return instance;
+    }
+
+    public void query(String sql) { /* limitação, cache... */ }
+}
+
+// uso: foo e bar são o MESMO objeto
+Database foo = Database.getInstance();
+Database bar = Database.getInstance();</pre>
+<table>
+<tr><th>Benefícios</th><th>Críticas e riscos</th></tr>
+<tr><td>acesso controlado à instância única<br>espaço de nomes menor e mais claro que variáveis globais<br>pode ser refinado por subclasses<br>pode evoluir para um número variável de instâncias</td><td><b>estado global disfarçado</b> (dependências escondidas)<br><b>difícil de testar</b> (não dá para trocar por um falso)<br>mistura responsabilidades (SRP)<br>concorrência exige cuidado</td></tr>
+</table>
+<p><b>Usos:</b> <code>Runtime.getRuntime()</code> em Java; configuração, logger, registro de serviços; gerenciadores de impressão, janelas e arquivos. <b>Relacionados:</b> Abstract Factory, Builder e Prototype podem ser singletons; basta uma Façade; estratégias sem estado podem ser compartilhadas.</p>
+<div class="ex">Complemento (fora dos slides), ligando com o DIP da aula anterior: <code>Database.getInstance()</code> escondido dentro de uma classe é um acoplamento à classe concreta, como o <code>new ConexaoMySql()</code>. Uma alternativa é criar <b>uma só instância</b> na montagem do sistema e <b>injetá-la</b> pelo construtor: continua havendo uma instância, mas sem o ponto de acesso global.</div>
+
+<h3>9. Observer — comportamental, escopo de objeto</h3>
+<div class="ex"><b>Analogia:</b> assinatura de jornal. Você não vai à banca ver se a próxima edição saiu; a editora envia para a sua caixa de correio. Ela mantém uma lista de assinantes, que podem sair da lista quando quiserem.</div>
+<p><b>Problema:</b> um cliente quer um celular novo que vai chegar à loja. Se visitar a loja todo dia, quase todas as visitas serão inúteis. Se a loja mandar e-mail a todos os clientes, incomoda quem não tem interesse. <b>Intenção:</b> definir uma dependência <b>um-para-muitos</b> entre objetos, de modo que, quando um muda de estado, todos os dependentes sejam <b>notificados e atualizados automaticamente</b>. Também conhecido como <i>Dependents</i> e <i>Publish-Subscribe</i>.</p>
+<p><b>Solução:</b> o objeto observado (<b>Publisher</b> ou <b>Subject</b>) mantém uma lista de <b>Observers (assinantes)</b> e chama o método de notificação (<code>atualizar</code>), declarado na interface do assinante, em todos eles quando muda. No exemplo da aula, uma planilha e dois gráficos mostram os mesmos dados, e quando um valor muda, as três visões se atualizam. <b>Aplicável</b> quando mudar um objeto exige mudar outros e o conjunto deles é desconhecido ou muda dinamicamente (interfaces gráficas), ou quando objetos precisam observar outros só por um período.</p>
+<pre>interface Observador { void atualizar(); }
+
+abstract class Sujeito {
+    private List&lt;Observador&gt; obs = new ArrayList&lt;&gt;();
+    void anexar(Observador o)    { obs.add(o); }
+    void desanexar(Observador o) { obs.remove(o); }
+    protected void notificar() {
+        for (Observador o : obs) o.atualizar();
+    }
+}
+
+class Estoque extends Sujeito {          // o Estoque não sabe quem está ouvindo
+    private int quantidade;
+    int getQuantidade() { return quantidade; }
+    void setQuantidade(int q) {
+        quantidade = q;
+        notificar();
+    }
+}
+
+class PainelLoja implements Observador {
+    private Estoque estoque;
+    PainelLoja(Estoque e) { estoque = e; estoque.anexar(this); }
+    public void atualizar() {
+        System.out.println("Estoque: " + estoque.getQuantidade());
+    }
+}
+// AlertaCompras: em atualizar(), se quantidade &lt; 5, avisa o setor de compras
+
+Estoque e = new Estoque();
+new PainelLoja(e);
+new AlertaCompras(e);
+e.setQuantidade(3);                      // avisa os dois</pre>
+<p>Na estrutura do exemplo do editor, o <code>Editor</code> tem um <code>EventManager</code> (com <code>subscribe</code>, <code>unsubscribe</code> e <code>notify</code>), que guarda objetos da interface <code>EventListeners</code> (<code>update(filename)</code>), implementada por <code>EmailAlertsListener</code> e <code>LoggingListener</code>.</p>
+<table>
+<tr><th>Benefícios</th><th>Riscos</th></tr>
+<tr><td>acoplamento abstrato: o Subject só conhece a interface Observer<br>comunicação por difusão: observers entram e saem em execução<br>novos observers sem alterar o Subject (OCP)</td><td>atualizações inesperadas (cascata)<br>ordem de notificação não garantida<br>listeners esquecidos causam vazamento de memória<br>fluxo implícito, difícil de depurar</td></tr>
+</table>
+<p><b>Usos:</b> <b>MVC</b> (o Model é o Subject e as Views são Observers; é a origem do padrão), listeners de interface gráfica (Swing, <code>addEventListener</code>), programação reativa e mensageria (RxJS, Flow do Java 9+, publish/subscribe). <b>Relacionados:</b> Mediator (um ChangeManager encapsula atualizações complexas) e Singleton (o ChangeManager costuma ser um). Em Java, <code>java.util.Observable</code> está <b>obsoleto desde o Java 9</b>.</p>
+
+<h3>10. Os três lado a lado</h3>
+<table>
+<tr><th></th><th>Façade</th><th>Singleton</th><th>Observer</th></tr>
+<tr><td>Propósito</td><td>Estrutural</td><td>Criacional</td><td>Comportamental</td></tr>
+<tr><td>Problema</td><td>subsistema complexo demais para o cliente</td><td>precisar de uma só instância</td><td>notificar vários objetos sobre uma mudança</td></tr>
+<tr><td>Solução</td><td>interface simples na frente</td><td>construtor privado + <code>getInstance()</code></td><td>lista de assinantes notificados</td></tr>
+<tr><td>Analogia</td><td>central de atendimento</td><td>governo</td><td>assinatura de jornal</td></tr>
+<tr><td>Cuidado</td><td>virar God Object</td><td>estado global, testes</td><td>cascata e vazamento</td></tr>
+</table>
+
+<h3>11. Conceitos relacionados</h3>
+<ul>
+<li><b>Os padrões se relacionam</b> (mapa do livro): por exemplo, Composite com Iterator, Visitor e Decorator; Abstract Factory com Factory Method e Prototype; Façade e Abstract Factory como Singleton; Template Method costuma usar Factory Method;</li>
+<li><b>Novos padrões</b> surgiram desde 1994: específicos de domínio ou paradigma (funcional, reativo), padrões de <b>arquitetura</b> e padrões para IA, aprendizado de máquina, blockchain e IoT (há catálogos para sistemas auto-adaptativos em IoT e para gêmeos digitais);</li>
+<li><b>GRASP</b> (General Responsibility Assignment Software Patterns): Creator, Information Expert, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection, Protected Variations;</li>
+<li><b>POSA</b> (Pattern-Oriented Software Architecture): padrões de arquitetura, como From Mud To Structure, Concurrency, Synchronization, Resource Management e Database Access.</li>
+</ul>
+
+<h3>12. Praticando</h3>
+<p><b>Seminário em vídeo:</b> cada grupo recebe <b>dois padrões GoF</b> por sorteio e, para cada um, prepara slides e vídeo com os itens solicitados. O vídeo tem <b>até 15 minutos</b>, e os integrantes aparecem e falam. A entrega é online, pelo Classroom, até 05/11/2026 (o slide escreve “29h59”); cada aluno submete o material individualmente. <b>Checkpoint 3</b> do trabalho em grupo (Fase 2): <b>Padrões GoF, 10/11</b>.</p>
+<p><b>Referências da aula:</b> Gamma et al. (1994), Alexander et al. (1977), Shvets (Refactoring.Guru) e Valente (Engenharia de Software Moderna), mais o material das Profas. Vânia Neves (UFF) e Talita Ribeiro (UERJ).</p>
+
+<h3>13. Pegadinhas</h3>
+<ul>
+<li><b>Padrão não é código pronto nem algoritmo:</b> é a ideia e a estrutura, adaptada a cada sistema;</li>
+<li><b>Mais padrões não é melhor:</b> padrão sem o problema que ele resolve é excesso de engenharia. Primeiro o problema, depois o padrão;</li>
+<li><b>Singleton não é para qualquer objeto importante:</b> só se a classe exigir uma única instância; senão vira estado global disfarçado;</li>
+<li><b>Façade não proíbe o acesso direto:</b> ela só oferece o caminho curto;</li>
+<li><b>Observer sem desanexar vaza memória:</b> observers esquecidos continuam na lista do Subject.</li>
+</ul>
 `
 },
 };
