@@ -1,6 +1,6 @@
 /* Projeto de Software — resumos das aulas, em linguagem simples (aba "Resumos").
    A chave é o id da aula em data-projeto.js. Mesmo formato de resumos-gpms.js.
-   Escritos a partir do texto dos slides (Arquitetura: aulas 1 e 2; SOLID: parte 1).
+   Escritos a partir do texto dos slides (Arquitetura: aulas 1 e 2; SOLID: partes 1 e 2; Aula 9: Frameworks).
    Trechos marcados como "complemento" vêm de pesquisa fora dos slides. */
 const RESUMOS_PROJETO = {
 
@@ -393,6 +393,242 @@ class Pedido {
 `
 },
 
+"proj-solid2": {
+  resumo: "Os três princípios que faltavam do SOLID, com os exemplos da aula: substituição de Liskov (aves e documentos), segregação de interfaces (aves que voam) e inversão de dependência (lembrete de senha e banco de dados), mais LSP × ISP, o trade-off e os exercícios.",
+  html: `
+<h3>1. Onde estamos</h3>
+<p>Na parte 1 vimos <b>S</b> (uma classe, um único motivo para mudar) e <b>O</b> (aberto para extensão, fechado para modificação). Hoje fecham-se as três letras que faltam. A pergunta de sempre continua: <b>o que podemos fazer para aumentar a qualidade do software?</b> A resposta dos princípios é buscar <b>alta coesão</b> (cada classe com um papel) e <b>baixo acoplamento</b> (classes que dependem pouco umas das outras).</p>
+<table>
+<tr><th></th><th>Princípio</th><th>Em uma frase</th><th>Pergunta que ajuda</th></tr>
+<tr><td><b>L</b></td><td>Liskov Substitution (LSP)</td><td>subclasses podem substituir suas superclasses</td><td>posso trocar o filho pelo pai, sem surpresa?</td></tr>
+<tr><td><b>I</b></td><td>Interface Segregation (ISP)</td><td>interfaces pequenas e específicas</td><td>a classe é obrigada a implementar algo que não usa?</td></tr>
+<tr><td><b>D</b></td><td>Dependency Inversion (DIP)</td><td>dependa de abstrações, não de implementações</td><td>a regra de negócio conhece a ferramenta concreta?</td></tr>
+</table>
+
+<h3>2. L — Substituição de Liskov (LSP)</h3>
+<p><b>Uma subclasse deve poder ser usada no lugar da superclasse sem causar efeitos inesperados.</b> Na figura da aula, o robô <b>Sam</b> faz café e seu filho <b>Eden</b> é um robô-filho. Se alguém pede café ao Eden e ele devolve <b>água</b>, ele quebrou a promessa do pai (errado). Se devolve um <b>cappuccino</b>, é café do mesmo jeito, só de um tipo específico (certo).</p>
+<p>A definição formal, de Barbara Liskov, diz que uma propriedade demonstrável para os objetos de um tipo T deve continuar demonstrável para os objetos de qualquer subtipo de T. Em português simples: <b>o que vale para o pai também precisa valer para o filho</b>. A classe filha deve processar as mesmas solicitações e entregar o mesmo resultado (ou um resultado do mesmo tipo). Se não faz isso, foi alterada de forma fundamental.</p>
+<div class="dica">Teste rápido: <b>“Posso trocar o filho pelo pai, sem surpresa?”</b> O objetivo é garantir consistência: o pai e as filhas são usados do mesmo jeito, sem erros.</div>
+
+<h4>Exemplo 1 — Aves: o pinguim que não voa</h4>
+<p><code>Ave</code> tem <code>voar()</code> e <code>bicar()</code>; <code>PicaPau</code> e <code>Pinguim</code> herdam dela. O pica-pau voa. O pinguim não, então sobrescreve <code>voar()</code> para lançar uma exceção. O código do cliente, que funcionava com qualquer ave, passa a quebrar:</p>
+<pre>class Ave {
+    void voar()  { /* ... */ }
+    void bicar() { /* ... */ }
+}
+class PicaPau extends Ave { }
+class Pinguim extends Ave {
+    @Override
+    void voar() {
+        throw new UnsupportedOperationException("Pinguim nao voa");
+    }
+}
+// cliente
+for (Ave a : aves) a.voar();   // explode no primeiro pinguim</pre>
+<p><b>Não posso usar o Pinguim no lugar da Ave sem quebrar o sistema.</b> A correção é fazer a hierarquia refletir <b>o que cada classe realmente consegue fazer</b>:</p>
+<pre>class Ave { void bicar() { /* ... */ } }
+class AveVoadora extends Ave { void voar() { /* ... */ } }
+class PicaPau extends AveVoadora { }
+class Pinguim extends Ave { }</pre>
+<p>Quem precisa voar pede uma <code>AveVoadora</code>; quem só precisa de uma <code>Ave</code> aceita qualquer uma, inclusive o pinguim.</p>
+
+<h4>Exemplo 2 — Documentos: o arquivo somente leitura</h4>
+<p><code>Documento</code> tem <code>abrir()</code> e <code>salvar()</code>. <code>Projeto</code> tem vários documentos e os métodos <code>abrirTodos()</code> e <code>salvarTodos()</code>. O <code>DoctoSomenteLeitura</code> herda de <code>Documento</code>, mas não pode salvar:</p>
+<pre>class DoctoSomenteLeitura extends Documento {
+    @Override
+    void salvar() {
+        throw new UnsupportedOperationException(
+                nome + " é somente leitura");
+    }
+}
+class Projeto {
+    private List&lt;Documento&gt; documentos;
+    void salvarTodos() {
+        // explode no primeiro somente leitura
+        documentos.forEach(Documento::salvar);
+    }
+}</pre>
+<p>Correção: <code>Documento</code> fica só com <code>abrir()</code>, e uma nova subclasse <code>DoctoEscrevivel</code> <b>acrescenta</b> <code>salvar()</code>. O <code>Projeto</code> passa a ter uma lista de <code>documentosEscreviveis</code> e <code>salvarTodos()</code> percorre apenas esses. Assim a herança <b>mantém a consistência e cumpre o “contrato”</b>.</p>
+<pre>class Documento { void abrir() { /* ... */ } }
+class DoctoEscrevivel extends Documento { void salvar() { /* ... */ } }
+class Projeto {
+    void salvarTodos() {
+        documentosEscreviveis.forEach(DoctoEscrevivel::salvar);
+    }
+}</pre>
+
+<h4>Como reconhecer uma violação do LSP</h4>
+<table>
+<tr><th>Sintoma no código</th><th>O que está acontecendo</th></tr>
+<tr><td>filha lança <code>UnsupportedOperationException</code> num método herdado</td><td>ela recusa uma promessa do pai</td></tr>
+<tr><td>método sobrescrito vazio, “não faz nada”</td><td>promete o que não cumpre</td></tr>
+<tr><td>cliente com <code>instanceof</code> ou <code>if (tipo == ...)</code> para tratar algumas filhas à parte</td><td>a filha não é realmente substituível</td></tr>
+<tr><td>filha muda o significado do que o pai faz</td><td>contrato alterado de forma fundamental</td></tr>
+</table>
+<div class="ex">Complemento (fora dos slides): o clássico <b>Quadrado × Retângulo</b>. Na matemática, todo quadrado é um retângulo; no código, se <code>Quadrado</code> herda de <code>Retangulo</code> e mudar a altura muda também a largura, um cliente que faz <code>setLargura(5)</code> e <code>setAltura(2)</code> esperando área 10 recebe 4. O LSP trata de <b>comportamento</b>, não do “é um” da vida real. A formulação mais precisa (projeto por contrato, de Bertrand Meyer) diz que a filha não pode exigir mais que o pai nem garantir menos.</div>
+
+<h3>3. I — Segregação de Interfaces (ISP)</h3>
+<p><b>Nenhum cliente deve ser forçado a depender de métodos que não usa.</b> (O slide também escreve: “um cliente não deve ser forçado a implementar uma interface que não usa”.) Na figura: uma lista de exercícios única para todos os robôs (girar, rotacionar os braços, mexer as antenas) faz o robô sem antenas reclamar. A correção são <b>três listas</b>, uma para cada tipo de robô.</p>
+<p>Quando uma classe é obrigada a realizar ações que não lhe servem, há desperdício e podem surgir erros inesperados. Uma classe deve realizar apenas as ações necessárias ao seu papel; o resto sai dela ou vai para outro lugar. O objetivo é <b>dividir um conjunto de ações em grupos menores</b>, de modo que a classe execute apenas o que realmente precisa.</p>
+<div class="dica">Dica da aula: <b>várias interfaces pequenas e coesas</b>, compostas conforme a necessidade.</div>
+
+<h4>Exemplo — Aves que voam e aves que não voam</h4>
+<p>Uma interface <code>Aves</code> tem <code>setLocalizacao</code>, <code>setAltitude</code> e <code>renderizar</code>. O <code>Papagaio</code> usa tudo. O <code>Pinguim</code> é obrigado a implementar <code>setAltitude</code>, mas não voa, e deixa o método vazio só para compilar:</p>
+<pre>interface Aves {
+    void setLocalizacao(int longitude, int latitude);
+    void setAltitude(int altitude);
+    void renderizar();
+}
+class Pinguim implements Aves {
+    public void setLocalizacao(int lon, int lat) { }
+    public void setAltitude(int altitude) {
+        // Não faz nada... Pinguim não sabe voar
+    }
+    public void renderizar() { }
+}</pre>
+<p>Correção: separar a interface em duas. <code>Aves</code> fica com o que é de <b>todas</b> as aves e <code>AvesQueVoam</code> acrescenta o que é só de <b>algumas</b>.</p>
+<pre>interface Aves {
+    void setLocalizacao(int lon, int lat);
+    void renderizar();
+}
+interface AvesQueVoam extends Aves {
+    void setAltitude(int altitude);
+}
+class Papagaio implements AvesQueVoam { /* setLocalizacao, setAltitude, renderizar */ }
+class Pinguim  implements Aves        { /* setLocalizacao, renderizar */ }</pre>
+<p><b>Cada classe implementa só o que faz sentido.</b></p>
+<div class="ex">Complemento (fora dos slides): uma interface “gorda” também obriga <b>todos os clientes e implementações a se rever</b> sempre que um método inútil para eles muda. O ISP nasceu quando Robert C. Martin trabalhou num sistema de impressoras da Xerox, em que uma classe que fazia tudo exigia recompilações constantes.</div>
+
+<h3>4. LSP × ISP: parecem, mas não são iguais</h3>
+<table>
+<tr><th></th><th>LSP</th><th>ISP</th></tr>
+<tr><td>Tipo de problema</td><td>de <b>herança</b></td><td>de <b>interface</b></td></tr>
+<tr><td>O que está errado</td><td>a subclasse <b>quebra as funcionalidades</b> da superclasse</td><td>a interface é <b>grande demais</b></td></tr>
+<tr><td>Sintoma</td><td><b>exceção</b> ao usar o filho como pai</td><td><b>métodos vazios</b> só para compilar</td></tr>
+<tr><td>Exemplo da aula</td><td><code>Pinguim extends Ave</code> e <code>voar()</code> lança exceção</td><td><code>Pinguim implements Aves</code> e <code>setAltitude()</code> vazio</td></tr>
+</table>
+<p>O mesmo pinguim aparece nos dois porque a solução é parecida: <b>separar o que é de todos do que é só de alguns</b>.</p>
+
+<h3>5. D — Inversão de Dependência (DIP)</h3>
+<p><b>As entidades devem depender de abstrações, não de implementações.</b> Na figura, um robô que corta pizza com “o <b>meu</b> braço-cortador” fica preso àquela ferramenta; o robô que corta pizza com “<b>qualquer ferramenta</b> que me derem” depende só de um encaixe.</p>
+<p>O princípio tem duas partes: <b>(1)</b> módulos de alto nível não devem depender de módulos de baixo nível; ambos devem depender de abstrações. <b>(2)</b> Abstrações não devem depender de detalhes; os detalhes é que devem depender das abstrações.</p>
+<table>
+<tr><th>Termo</th><th>O que é</th><th>No exemplo do lembrete</th></tr>
+<tr><td><b>Alto nível</b></td><td>a classe que executa uma ação por meio de uma ferramenta</td><td><code>LembreteSenha</code></td></tr>
+<tr><td><b>Baixo nível</b></td><td>a ferramenta que executa a ação</td><td><code>ConexaoMySql</code></td></tr>
+<tr><td><b>Abstração</b></td><td>a interface que conecta as duas classes</td><td><code>ConexaoBDInterface</code></td></tr>
+<tr><td><b>Detalhes</b></td><td>a forma como a ferramenta funciona</td><td>o jeito de falar com MySQL ou Oracle</td></tr>
+</table>
+<div class="dica">Dica da aula: <b>o que dá valor ao sistema?</b> (pode ser alto nível). <b>O que pode mudar?</b> (pode ser baixo nível). O objetivo é reduzir a dependência do alto nível em relação ao baixo nível, por meio de uma interface.</div>
+
+<h4>Exemplo — Lembrete de senha e banco de dados, passo a passo</h4>
+<p><b>Passo 1 — o problema.</b> A classe cria a ferramenta sozinha. “<code>new</code> dentro da classe = dependência do MySQL”:</p>
+<pre>public class LembreteSenha {
+    private ConexaoBD conexao;
+    public LembreteSenha() {
+        this.conexao = new ConexaoMySql();   // preso ao MySQL
+    }
+    // faz alguma coisa com a conexao
+}</pre>
+<p>Consequências: para <b>reaproveitar</b> a classe em outro sistema só se houver MySQL; para <b>testar</b> é preciso um MySQL de verdade; para <b>trocar o banco</b> é preciso editar a classe.</p>
+<p><b>Passo 2 — injetar pelo construtor.</b> A classe passa a receber a ferramenta pronta. Melhora, mas o tipo ainda é <code>ConexaoMySql</code>, então trocar o banco continua exigindo editar a classe:</p>
+<pre>public LembreteSenha(ConexaoMySql conexao) {
+    this.conexao = conexao;
+}</pre>
+<p><b>Passo 3 — injetar uma abstração.</b> A classe de alto nível só conhece a interface e “não sabe qual banco há por trás”; os detalhes passam a implementar a interface:</p>
+<pre>class LembreteSenha {
+    private ConexaoBDInterface conexao;
+    public LembreteSenha(ConexaoBDInterface conexao) {
+        this.conexao = conexao;
+    }
+    // não sabe qual banco há por trás
+}
+
+interface ConexaoBDInterface { void executa(String sql); }
+class ConexaoMySql  implements ConexaoBDInterface { /* ... */ }
+class ConexaoOracle implements ConexaoBDInterface { /* ... */ }</pre>
+<p><b>Passo 4 — quem monta os objetos escolhe a implementação</b>, e para testes entra um falso, sem banco nenhum:</p>
+<pre>new LembreteSenha(new ConexaoMySql());
+new LembreteSenha(new ConexaoOracle());
+
+// Para testes: um falso, sem banco nenhum
+ConexaoBDInterface falsa =
+        sql -&gt; System.out.println("[FAKE] " + sql);
+new LembreteSenha(falsa).enviar("rebeca");</pre>
+<p>No diagrama final, <code>LembreteSenha</code> aponta para a interface e <code>ConexaoMySql</code>, <code>ConexaoOracle</code> e <code>Fake</code> também apontam para ela: <b>os detalhes passam a apontar para a abstração</b>. Por isso se chama “inversão”: antes a seta ia do alto nível para o baixo nível; agora o baixo nível também depende da interface.</p>
+<div class="ex">Pense numa tomada: o abajur (alto nível) depende do <b>padrão da tomada</b> (a interface), não da usina de energia. A usina pode mudar (hidrelétrica, solar), e o abajur continua funcionando. Para testar o abajur, basta um gerador de brinquedo que respeite o mesmo padrão.</div>
+<div class="ex">Complemento (fora dos slides): <b>DIP</b> é o princípio; <b>injeção de dependência</b> é uma técnica para praticá-lo (receber a dependência de fora, pelo construtor, por método ou por atributo); <b>inversão de controle</b> é a ideia mais ampla em que outra coisa (um framework ou contêiner) monta e chama os objetos — assunto da Aula 9.</div>
+
+<h3>6. SOLID é um trade-off</h3>
+<p>Toda prática tem um custo, então vale avaliar antes de aplicar sempre.</p>
+<table>
+<tr><th>Ganhos</th><th>Custos</th></tr>
+<tr><td>mudar sem efeito cascata<br>reusar e testar classes isoladas<br>entender e evoluir o código</td><td>mais classes e mais interfaces<br>mais indireção para navegar<br>excesso de engenharia em sistema pequeno</td></tr>
+</table>
+<ul>
+<li>Os princípios contribuem para a qualidade por buscarem <b>alta coesão e baixo acoplamento</b>;</li>
+<li>decisões de design têm <b>trade-off</b> (mais flexibilidade custa mais complexidade): um design bom <b>depende do contexto</b>;</li>
+<li>é difícil acertar de primeira; em geral o código melhora <b>refatorando e avaliando as mudanças</b>.</li>
+</ul>
+<p><b>Reflexão da aula:</b> qual foi o último código que você teve medo de alterar, e por quê? Qual o custo de aplicar um princípio cedo demais ou tarde demais? Como você saberia, na prática, que um design está bom?</p>
+
+<h3>7. Praticando</h3>
+<h4>Exercício em sala: LSP + ISP + DIP (a loja)</h4>
+<p>No sistema da loja, o <b>cancelamento do pedido</b> exige <b>estorno do pagamento</b> e <b>aviso ao cliente</b>. A atividade pede resolver no nível conceitual: sublinhar o problema no código, responder e desenhar a solução. O código do exercício não aparece no texto dos slides; abaixo vai uma <b>resolução própria</b> com um código equivalente.</p>
+<pre>// ANTES: alto nível preso a ferramentas concretas
+class Pedido {
+    void cancelar() {
+        new GatewayCartao().estornar(this);   // DIP: new dentro
+        new EmailSmtp().enviar(cliente);      // DIP: new dentro
+    }
+}
+
+// DEPOIS: depende de abstrações pequenas (ISP), injetadas (DIP)
+interface Estornavel { void estornar(Pedido p); }
+interface Notificador { void avisar(Cliente c, String msg); }
+
+class CancelamentoPedido {
+    private final Estornavel pagamento;
+    private final Notificador notificador;
+    CancelamentoPedido(Estornavel pagamento, Notificador notificador) {
+        this.pagamento = pagamento;
+        this.notificador = notificador;
+    }
+    void cancelar(Pedido p) {
+        pagamento.estornar(p);
+        notificador.avisar(p.getCliente(), "Pedido cancelado");
+    }
+}</pre>
+<table>
+<tr><th>Princípio</th><th>Como aparece na resolução</th></tr>
+<tr><td><b>DIP</b></td><td>o cancelamento depende de <code>Estornavel</code> e <code>Notificador</code>, não de <code>GatewayCartao</code> nem de <code>EmailSmtp</code>; no teste entram falsos</td></tr>
+<tr><td><b>ISP</b></td><td>duas interfaces pequenas, em vez de uma “<code>ServicosDaLoja</code>” com tudo misturado</td></tr>
+<tr><td><b>LSP</b></td><td>todo meio de pagamento que implementa <code>Estornavel</code> (cartão, Pix…) deve estornar sem lançar exceção; se algum não puder, não deve prometer estornar</td></tr>
+</table>
+
+<h4>Trabalho em grupo, Fase 2 — Checkpoint 2: refatoração SOLID (03/11)</h4>
+<p>Cada integrante encontra <b>pelo menos uma violação</b> de um princípio SOLID no código do agregado ou módulo sob sua responsabilidade e a corrige; o grupo, somado, cobre <b>pelo menos três princípios diferentes</b>. O código “antes” precisa estar em um commit anterior a 06/10; a alternativa é uma <b>mudança de requisito plausível</b>, descrita no documento, que exponha a violação (por exemplo, uma nova regra de negócio que obrigaria a modificar uma classe existente, ferindo o aberto-fechado). Em <code>docs/solid.md</code>, cada integrante registra:</p>
+<ul>
+<li>o princípio violado e o trecho de código, com o hash do commit “antes”;</li>
+<li>o problema concreto (que mudança ficava difícil, ou que responsabilidades estavam misturadas);</li>
+<li>a refatoração, com o hash do commit “depois” (do próprio autor);</li>
+<li>como os testes garantiram que o comportamento não mudou;</li>
+<li>o custo da refatoração (mais classes, mais indireção) e por que ele compensa.</li>
+</ul>
+
+<h4>Seminário Padrões GoF</h4>
+<p>Cada grupo recebe <b>dois padrões GoF por sorteio</b> e faz um vídeo de até <b>15 minutos</b>, com os integrantes aparecendo e falando, mais os slides. A entrega é <b>online</b>, pelo Classroom, até 05/11/2026 (o slide escreve “29h59”, provavelmente 23h59); cada aluno submete o material individualmente, ainda que igual ao da equipe.</p>
+
+<h3>8. Pegadinhas</h3>
+<ul>
+<li><b>LSP não é “é um” da vida real:</b> quadrado “é um” retângulo na geometria, mas pode não ser substituível no código. O que vale é o comportamento;</li>
+<li><b>ISP não manda criar uma interface por método:</b> a ideia é grupos <b>coesos</b> e pequenos, compostos conforme a necessidade;</li>
+<li><b>DIP não exige interface para tudo:</b> só compensa onde a ferramenta pode mudar ou onde se quer testar sem a real. Para uma classe estável e simples, é excesso de engenharia;</li>
+<li><b>Injetar não é o mesmo que inverter:</b> receber um <code>ConexaoMySql</code> pelo construtor é injeção, mas ainda depende do detalhe. A inversão só acontece quando o tipo recebido é a <b>abstração</b>.</li>
+</ul>
+`
+},
+
 "proj-ex": {
   resumo: "Exercícios resolvidos das aulas de Arquitetura (delivery: requisitos, táticas, redesenho, E se…, estilos, trade-offs, ADR) e de SOLID (SRP e OCP: Pedido, Envio e um exercício de Funcionário). As respostas são resolução própria.",
   html: `
@@ -548,6 +784,151 @@ class RelatorioFuncionario   { String gerarHtml(Funcionario f) { ... } }</pre>
 <li><b>OCP ≠ “nunca editar”:</b> bugs e mudanças na mesma regra ainda exigem edição; o OCP trata de <b>acrescentar variações</b> sem mexer no que funciona;</li>
 <li><b>SOLID é trade-off:</b> em sistema pequeno ou protótipo, se só existe um tipo de envio e nada indica outros, a interface é <b>excesso de engenharia</b> (mais classes, mais indireção). Aplique onde há variação real ou dor de mudança.</li>
 </ul>
+`
+},
+
+"proj-a9": {
+  resumo: "O que é um framework (aplicação quase completa), características, exemplos de back-end e front-end, tipos (suporte, aplicação e domínio), classificação em caixa-branca, preta e cinza, framework × biblioteca (inversão de controle), × padrões de projeto, custo-benefício, hot spots e frozen spots e como construir um.",
+  html: `
+<h3>1. O que é um framework</h3>
+<p>Um framework é uma <b>aplicação semi-completa reutilizável</b> que, quando <b>especializada</b>, produz aplicações personalizadas. Também se diz que é um conjunto de classes que representam um <b>projeto abstrato</b> para uma <b>família de problemas relacionados</b>. E o ponto principal: ele dá não só <b>reúso de código-fonte</b>, mas também <b>reúso do projeto</b> (a estrutura da solução, quais classes existem e como colaboram).</p>
+<p>A aula resume como “uma aplicação <b>QUASE</b> completa”: o seu trabalho é <b>prover os pedaços que faltam</b>, específicos da sua aplicação, criando <b>subclasses</b> derivadas das <b>classes abstratas</b> do framework. No diagrama do slide, uma linha tracejada separa a camada <b>Framework</b> (classes abstratas) da camada <b>Application</b> (classes concretas como <code>WorkOrder</code> e <code>Pothole</code>, que estendem as do framework).</p>
+<div class="ex">Pense numa casa pré-moldada: paredes, telhado e encanamento já vêm prontos e encaixam de um jeito definido. Você escolhe o que muda (cor, portas, cômodos). Uma biblioteca seria uma caixa de ferramentas soltas; o framework já traz a planta e o esqueleto da obra.</div>
+<p>Frameworks resolvem um conjunto particular de problemas, adaptados a contextos específicos, e podem entregar um projeto ótimo para a aplicação. A figura “Framework Scrum” do slide mostra o <b>Scrum</b> (Product Owner, Scrum Master, Scrum Team; Product Backlog → Sprint Planning → Sprint Backlog → Sprint de 1 a 4 semanas com Daily Scrum de 24h → Sprint Review → Entrega → Retrospectiva) como exemplo da palavra “framework”, mas ali é um framework de <b>processo</b>. O resto da aula trata de frameworks de <b>software</b>.</p>
+
+<h3>2. Características básicas</h3>
+<table>
+<tr><th>Característica</th><th>Por quê</th></tr>
+<tr><td><b>Reusável</b></td><td>é o propósito final; para ser reusável precisa ser <b>usável</b>: bem documentado e fácil de usar</td></tr>
+<tr><td><b>Extensível</b></td><td>contém funcionalidade <b>abstrata</b> (sem implementação) que precisa ser completada</td></tr>
+<tr><td><b>De uso seguro</b></td><td>o desenvolvedor da aplicação <b>não pode destruir</b> o framework</td></tr>
+<tr><td><b>Eficiente</b></td><td>é usado em muitas situações, e algumas exigem desempenho</td></tr>
+<tr><td><b>Completo</b></td><td>deve cobrir o <b>domínio do problema</b> pretendido</td></tr>
+</table>
+
+<h3>3. Exemplos de frameworks</h3>
+<p>A figura da aula cita Spring Boot, jQuery, Corona, Flutter, Material Design, Ionic, React, Angular, Cordova e Bootstrap: há frameworks de back-end, de front-end e de aplicações móveis. Os detalhados nos slides:</p>
+<table>
+<tr><th>Framework</th><th>Tipo</th><th>O que é</th></tr>
+<tr><td><b>Spring</b></td><td>back-end (Java)</td><td>open source, baseado em <b>inversão de controle (IoC)</b> e <b>injeção de dependência</b>; um contêiner instancia as classes e define as dependências por arquivo de configuração XML; módulos de Web, persistência, acesso remoto e programação orientada a aspectos</td></tr>
+<tr><td><b>Django</b></td><td>back-end (Python)</td><td>web, prático e rápido, padrão <b>model-template-view (MTV)</b>, princípio <b>DRY</b> (Don’t Repeat Yourself)</td></tr>
+<tr><td><b>Express.js</b></td><td>back-end (Node.js/JavaScript)</td><td>web e <b>criação de APIs</b></td></tr>
+<tr><td><b>ASP.NET</b></td><td>back-end (.NET)</td><td>aplicativos web em C#, F# ou Visual Basic.NET, integrado ao .NET Framework</td></tr>
+<tr><td><b>Laravel</b></td><td>back-end</td><td>web com padrão <b>MVC</b>; autenticação e autorização integradas, sintaxe simples, sistema modular com gerenciador de dependências, acesso a bancos relacionais e utilitários</td></tr>
+<tr><td><b>AngularJS</b></td><td>front-end</td><td>mantido pelo Google, ajuda a executar <b>single-page applications</b>, construído sob o padrão <b>MVVM</b></td></tr>
+<tr><td><b>Vue.js</b></td><td>front-end</td><td>interfaces de usuário e single-page applications; arquitetura que pode ser adotada de forma <b>incremental</b>, com renderização declarativa e composição de componentes</td></tr>
+<tr><td><b>Bootstrap</b></td><td>front-end</td><td>nasceu no Twitter; componentes com HTML, CSS e JavaScript, para sites amigáveis e <b>responsivos</b> (o layout se ajusta ao dispositivo)</td></tr>
+<tr><td><b>Ember.js</b></td><td>front-end</td><td>baseado em MVVM; permite aplicações móveis e desktop</td></tr>
+</table>
+
+<h3>4. Tipos de framework</h3>
+<table>
+<tr><th>Tipo</th><th>Também chamado</th><th>O que oferece</th><th>Exemplo</th></tr>
+<tr><td><b>Suporte</b></td><td>—</td><td>serviços de nível de <b>sistema operacional</b> (acesso a arquivos, computação distribuída, device drivers); <b>são raros</b></td><td>drivers de dispositivo</td></tr>
+<tr><td><b>Aplicação</b></td><td>horizontal</td><td>conhecimento aplicável a <b>vários tipos de aplicações</b>, sem depender do domínio; resolve <b>uma parte</b> do problema</td><td>framework de interface gráfica (GUI)</td></tr>
+<tr><td><b>Domínio</b></td><td>vertical ou especialista</td><td>conhecimento de um <b>domínio particular</b>; resolve <b>boa parte</b> da aplicação</td><td>aplicações de controle financeiro</td></tr>
+</table>
+<table>
+<tr><th></th><th>Horizontais</th><th>Verticais</th></tr>
+<tr><td>Generalidade</td><td>mais genéricos</td><td>resolvem problemas específicos</td></tr>
+<tr><td>Usados em</td><td>variedade de projetos</td><td>um domínio particular</td></tr>
+<tr><td>Ligados a</td><td>tecnologia</td><td>domínio de aplicação</td></tr>
+<tr><td>Imagem da aula</td><td><b>canivete suíço</b> (serve a Saúde, Transações, Interface Gráfica…)</td><td><b>chave de fenda</b> (serve a Hospital, Convênio, Consultório)</td></tr>
+</table>
+
+<h3>5. Classificação: caixa-branca, caixa-preta e caixa-cinza</h3>
+<p>Quanto a <b>como o framework é usado</b>:</p>
+<table>
+<tr><th></th><th>Caixa-branca</th><th>Caixa-preta</th><th>Caixa-cinza</th></tr>
+<tr><td>Como reusa</td><td>estende por <b>subclasses</b> com sobrescrita de métodos (métodos gancho, <i>hook methods</i>)</td><td>usa o que já existe: <b>configuração, composição</b> ou interfaces para os componentes</td><td>meio-termo: acesso parcial, como um usuário padrão; o profissional precisa explorar as informações ativamente</td></tr>
+<tr><td>Parte interna</td><td>visível; é preciso entender os <b>detalhes</b></td><td>não pode ser vista nem alterada; basta a <b>interface</b></td><td>parcialmente disponível</td></tr>
+<tr><td>Fácil de…</td><td><b>projetar</b></td><td><b>usar</b></td><td>comum em aplicações Web (foco em aspectos da rede)</td></tr>
+</table>
+<div class="ex">Branca: você abre o motor do carro e troca peças (sabe como funciona). Preta: você só gira a chave e usa o painel. Cinza: você tem o painel e alguns relatórios do computador de bordo, mas precisa ir atrás deles.</div>
+
+<h3>6. Framework × biblioteca</h3>
+<p>A diferença está em <b>quem chama quem</b>. Numa <b>biblioteca</b>, <b>você chama</b> as funções, quando e como quiser. Num <b>framework</b>, <b>ele chama o seu código</b>. E o framework <b>contém</b> bibliotecas. Isso é a <b>inversão de controle</b>, resumida no <b>Princípio de Hollywood</b>: <i>“don’t call us, we’ll call you”</i> (não nos ligue, nós ligamos para você).</p>
+<table>
+<tr><th></th><th>Biblioteca</th><th>Framework</th></tr>
+<tr><td>Quem chama</td><td>seu código chama a biblioteca</td><td>o framework chama seu código</td></tr>
+<tr><td>Fluxo de controle</td><td>não pré-definido (é seu)</td><td>controlado pelo framework</td></tr>
+<tr><td>Interação entre objetos</td><td>não pré-definida</td><td>definida pelo framework</td></tr>
+<tr><td>Comportamento padrão</td><td>não tem</td><td>tem (<i>default</i>)</td></tr>
+<tr><td>Personalização</td><td>o cliente instancia classes</td><td>por subclasses (ou configuração)</td></tr>
+</table>
+<pre>// Biblioteca: você decide quando chamar
+int maior = Math.max(a, b);
+
+// Framework (estilo Spring): você só preenche o pedaço que falta;
+// o framework decide quando chamar, a cada requisição HTTP
+@RestController
+class PedidoController {
+    @GetMapping("/pedidos")
+    List&lt;Pedido&gt; listar() { return servico.todos(); }
+}</pre>
+<div class="dica">Pergunta para decidir: <b>quem controla o fluxo?</b> Se é o seu código, é biblioteca; se é o código de outra pessoa que chama o seu, é framework.</div>
+
+<h3>7. Framework × padrões de projeto</h3>
+<table>
+<tr><th></th><th>Framework</th><th>Padrão de projeto</th></tr>
+<tr><td>Tamanho</td><td><b>maior</b>, um “pedaço” de software</td><td>elemento arquitetural <b>menor</b>, poucas classes</td></tr>
+<tr><td>Natureza</td><td><b>concreto</b>: tem código e implementação</td><td><b>abstrato</b>: uma solução ou ideia</td></tr>
+<tr><td>Domínio</td><td>específico em relação ao domínio</td><td>menos especializado, agnóstico em relação ao domínio</td></tr>
+<tr><td>Relação</td><td>usa <b>diversos</b> padrões (ex.: IoC no Spring, MVC no Laravel, MTV no Django)</td><td>soluções reutilizáveis para problemas recorrentes; organização do código; boas práticas; padronização</td></tr>
+</table>
+
+<h3>8. Framework vale a pena?</h3>
+<table>
+<tr><th>Benefícios</th><th>Custos</th></tr>
+<tr><td>reúso de código e de projeto<br>aproveita a experiência de especialistas do domínio<br>menos manutenção (aplicações com menos código)<br>mais produtividade (foco no que é específico)<br>economia a longo prazo</td><td>mais esforço de construção e aprendizado<br>programas mais difíceis de depurar<br>exige documentação de manutenção e apoio<br>pode ser difícil achar um para alguns domínios</td></tr>
+</table>
+<div class="ex">Vários projetos parecidos e equipe com tempo de aprender: o framework tende a compensar. Um protótipo pequeno e descartável em que ninguém conhece a ferramenta: o custo de aprendizado pode superar o ganho. A aula fecha dizendo que <b>não existe um melhor framework</b>.</div>
+
+<h3>9. Hot spots e frozen spots</h3>
+<ul>
+<li><b>Hot spots</b> (ou <i>hooks</i>): partes <b>projetadas para serem extensíveis</b>, que se adaptam às necessidades de cada aplicação;</li>
+<li><b>Frozen spots</b>: partes <b>fixas</b> em todas as instanciações, com a infraestrutura comum a todas as aplicações; podem coordenar as chamadas aos hot spots.</li>
+</ul>
+<p>A combinação dos dois define a <b>arquitetura</b> do framework, e por isso é preciso <b>fronteiras bem definidas</b> entre o que muda e o que não muda.</p>
+<pre>// Frozen spot: o "molde" do framework, que ninguém altera
+abstract class ProcessadorDePedido {
+    public final void processar(Pedido p) {
+        validar(p);
+        cobrar(p);          // hot spot (gancho)
+        notificar(p);       // hot spot (gancho)
+    }
+    protected void validar(Pedido p) { /* comportamento padrão */ }
+    protected abstract void cobrar(Pedido p);
+    protected abstract void notificar(Pedido p);
+}
+
+// Sua aplicação preenche os hot spots
+class ProcessadorLojaX extends ProcessadorDePedido {
+    protected void cobrar(Pedido p)    { /* cartão, Pix... */ }
+    protected void notificar(Pedido p) { /* e-mail, SMS... */ }
+}</pre>
+<div class="ex">Complemento (fora dos slides): o exemplo acima é o padrão <b>Template Method</b>. O método <code>processar</code> é o frozen spot (o fluxo fixo) e <code>cobrar</code> e <code>notificar</code> são os hot spots (ganchos) que você sobrescreve num framework caixa-branca.</div>
+
+<h3>10. Construindo frameworks</h3>
+<p>Os slides citam o artigo <i>“Evolving Frameworks: A Pattern Language for Developing Object-Oriented Frameworks”</i> (Don Roberts e Ralph Johnson, Universidade de Illinois). A ideia é que o framework <b>evolui</b>, não nasce pronto:</p>
+<table>
+<tr><th>Passo</th><th>O que fazer</th><th>Por quê</th></tr>
+<tr><td>1</td><td>Crie <b>algumas aplicações</b> que o framework pretende ajudar</td><td>frameworks são abstrações, e as pessoas generalizam a partir de exemplos concretos</td></tr>
+<tr><td>2</td><td>Construa um <b>framework caixa-branca</b></td><td>generalize e use herança para especializar quando necessário</td></tr>
+<tr><td>3</td><td>Crie uma <b>biblioteca de componentes</b></td><td>vá adicionando componentes à medida que constrói aplicações</td></tr>
+<tr><td>4</td><td>Identifique os <b>hot spots</b> e construa <b>objetos plugáveis</b></td><td>separe o que não muda do que muda; subclasses adaptáveis e parametrizáveis</td></tr>
+<tr><td>5</td><td><b>Refatore</b> para granularidades mais finas</td><td>continue quebrando objetos até não fazer mais sentido</td></tr>
+<tr><td>6</td><td>Chegue ao <b>framework caixa-preta</b></td><td>use <b>composição</b> para combinar os componentes</td></tr>
+</table>
+
+<h3>11. Resumindo e ligação com SOLID</h3>
+<ul>
+<li>Frameworks incorporam <b>muito conhecimento</b> sobre o problema do domínio;</li>
+<li>são <b>difíceis de desenvolver</b>, mas podem <b>acelerar</b> o desenvolvimento;</li>
+<li><b>escolher e usar</b> frameworks adequados é uma habilidade importante;</li>
+<li><b>não existe um melhor framework</b>.</li>
+</ul>
+<div class="dica">Ligação com a aula de SOLID 2 (fora dos slides): a inversão de controle é o <b>DIP em escala grande</b> (o framework, de alto nível, depende de abstrações que o seu código implementa; o Spring faz a injeção de dependência por você). Hot spots e frozen spots lembram o <b>OCP</b>: aberto para extensão nos ganchos, fechado para modificação no resto.</div>
 `
 },
 };
